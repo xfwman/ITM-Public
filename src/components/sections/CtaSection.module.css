@@ -1,0 +1,18 @@
+.panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(17, 29, 47, 0.08);
+  background:
+    linear-gradient(135deg, rgba(17, 29, 47, 0.95), rgba(13, 83, 78, 0.92));
+  color: white;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.16), transparent 22%),
+    radial-gradient(circle at 12% 100%, rgba(204, 156, 86, 0.28), transparent 26%);
+  pointer-events: none;
+}

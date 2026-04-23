@@ -1,0 +1,23 @@
+.panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(17, 29, 47, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 248, 238, 0.82));
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(29, 166, 154, 0.1), transparent 34%),
+    radial-gradient(circle at 92% 24%, rgba(204, 156, 86, 0.18), transparent 18%);
+  pointer-events: none;
+}
+
+[data-mantine-color-scheme="dark"] .panel {
+  border-color: rgba(237, 242, 247, 0.08);
+  background:
+    linear-gradient(180deg, rgba(17, 29, 47, 0.72), rgba(9, 17, 27, 0.84));
+}

@@ -1,0 +1,75 @@
+.headerRoot {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 40;
+  background: rgba(255, 252, 247, 0.78);
+  backdrop-filter: blur(18px);
+  border-block-end: 1px solid rgba(17, 29, 47, 0.08);
+}
+
+.brandLink {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brandName {
+  font-family: var(--font-heading), serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.brandStrapline {
+  max-inline-size: 21rem;
+}
+
+.navLink {
+  position: relative;
+  padding-block: 0.45rem;
+  color: var(--mantine-color-dimmed);
+  font-weight: 500;
+  transition:
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.navLink::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -0.15rem;
+  block-size: 2px;
+  border-radius: 999px;
+  background: var(--mantine-color-brand-5);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 140ms ease;
+}
+
+.navLink:hover {
+  color: var(--mantine-color-text);
+}
+
+.navLink[data-active="true"] {
+  color: var(--mantine-color-text);
+}
+
+.navLink[data-active="true"]::after {
+  transform: scaleX(1);
+}
+
+.drawerContent {
+  background:
+    linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(245, 242, 235, 0.98));
+}
+
+[data-mantine-color-scheme="dark"] .headerRoot {
+  background: rgba(9, 17, 27, 0.78);
+  border-block-end-color: rgba(237, 242, 247, 0.08);
+}
+
+[data-mantine-color-scheme="dark"] .drawerContent {
+  background:
+    linear-gradient(180deg, rgba(9, 17, 27, 0.99), rgba(11, 22, 35, 0.99));
+}

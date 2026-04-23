@@ -1,0 +1,33 @@
+.heroCard {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(17, 29, 47, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 248, 238, 0.9));
+}
+
+.heroCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(29, 166, 154, 0.18), transparent 26%),
+    radial-gradient(circle at 100% 0%, rgba(204, 156, 86, 0.24), transparent 20%);
+  pointer-events: none;
+}
+
+.heroPanel {
+  border: 1px solid rgba(17, 29, 47, 0.08);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+[data-mantine-color-scheme="dark"] .heroCard {
+  border-color: rgba(237, 242, 247, 0.08);
+  background:
+    linear-gradient(180deg, rgba(17, 29, 47, 0.82), rgba(9, 17, 27, 0.88));
+}
+
+[data-mantine-color-scheme="dark"] .heroPanel {
+  border-color: rgba(237, 242, 247, 0.08);
+  background: rgba(11, 22, 35, 0.76);
+}
