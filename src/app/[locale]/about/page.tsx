@@ -60,7 +60,13 @@ export default async function AboutPage({ params }: AboutPageProps) {
             </Stack>
           </GridCol>
           <GridCol span={{ base: 12, md: 5 }}>
-            <Paper bg="var(--panel-surface-strong)" p="xl" radius="md" shadow="sm" withBorder>
+            <Paper
+              bg="var(--panel-surface-strong)"
+              className="surface-outer-shadow"
+              p="xl"
+              radius="md"
+              withBorder
+            >
               <Stack gap="sm">
                 <Text c="brand.6" fw={600} size="sm" tt="uppercase">
                   {page.profile.eyebrow}

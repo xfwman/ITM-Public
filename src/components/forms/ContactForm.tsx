@@ -124,7 +124,7 @@ export function ContactForm({ content }: ContactFormProps) {
   }
 
   return (
-    <Paper withBorder p="xl" shadow="sm">
+    <Paper className="surface-outer-shadow" withBorder p="xl">
       <Stack gap="lg">
         <Stack gap={6}>
           <Text fw={600} size="xl">

@@ -6,8 +6,15 @@ import classes from "@/components/effects/AmbientBugs.module.css";
 
 interface BugFieldInstance {
   frame(timestamp: number): void;
-  resize(width: number, height: number, dpr: number): void;
+  resize(
+    viewportWidth: number,
+    viewportHeight: number,
+    pageWidth: number,
+    pageHeight: number,
+    dpr: number,
+  ): void;
   set_dark_mode(darkMode: boolean): void;
+  set_viewport(scrollX: number, scrollY: number): void;
   set_obstacles(rects: Float32Array): void;
 }
 
@@ -22,8 +29,8 @@ const OBSTACLE_SELECTOR = "main .mantine-Paper-root, main .mantine-Card-root";
 
 function collectObstacleRects(): number[] {
   const rects: number[] = [];
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
+  const pageX = window.scrollX;
+  const pageY = window.scrollY;
 
   for (const element of document.querySelectorAll<HTMLElement>(OBSTACLE_SELECTOR)) {
     const rect = element.getBoundingClientRect();
@@ -32,18 +39,36 @@ function collectObstacleRects(): number[] {
       continue;
     }
 
-    if (rect.bottom < -80 || rect.top > viewportHeight + 80) {
-      continue;
-    }
-
-    if (rect.right < -80 || rect.left > viewportWidth + 80) {
-      continue;
-    }
-
-    rects.push(rect.left, rect.top, rect.width, rect.height);
+    rects.push(rect.left + pageX, rect.top + pageY, rect.width, rect.height);
   }
 
   return rects;
+}
+
+function getPageMetrics() {
+  const root = document.documentElement;
+  const body = document.body;
+
+  return {
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight,
+    pageWidth: Math.max(
+      root.scrollWidth,
+      root.clientWidth,
+      body?.scrollWidth ?? 0,
+      body?.clientWidth ?? 0,
+      window.innerWidth,
+    ),
+    pageHeight: Math.max(
+      root.scrollHeight,
+      root.clientHeight,
+      body?.scrollHeight ?? 0,
+      body?.clientHeight ?? 0,
+      window.innerHeight,
+    ),
+    scrollX: window.scrollX,
+    scrollY: window.scrollY,
+  };
 }
 
 function loadAmbientBugsModule() {
@@ -60,8 +85,9 @@ export function AmbientBugs() {
 
     let cancelled = false;
     let frameId = 0;
+    let viewportDirty = true;
     let obstacleDirty = true;
-    let resizeDirty = true;
+    let boundsDirty = true;
     let scene: BugFieldInstance | null = null;
     let resizeObserver: ResizeObserver | null = null;
     let mutationObserver: MutationObserver | null = null;
@@ -77,10 +103,25 @@ export function AmbientBugs() {
       );
     }
 
+    function syncBounds() {
+      const { pageHeight, pageWidth, viewportHeight, viewportWidth } = getPageMetrics();
+
+      scene?.resize(
+        viewportWidth,
+        viewportHeight,
+        pageWidth,
+        pageHeight,
+        window.devicePixelRatio || 1,
+      );
+
+      boundsDirty = false;
+      viewportDirty = true;
+    }
+
     function syncViewport() {
-      scene?.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1);
-      resizeDirty = false;
-      obstacleDirty = true;
+      const { scrollX, scrollY } = getPageMetrics();
+      scene?.set_viewport(scrollX, scrollY);
+      viewportDirty = false;
     }
 
     function syncObstacles() {
@@ -104,6 +145,7 @@ export function AmbientBugs() {
           Math.floor(Math.random() * 2 ** 31),
         );
         syncColorScheme();
+        syncBounds();
         syncViewport();
         syncObstacles();
 
@@ -112,7 +154,11 @@ export function AmbientBugs() {
             return;
           }
 
-          if (resizeDirty) {
+          if (boundsDirty) {
+            syncBounds();
+          }
+
+          if (viewportDirty) {
             syncViewport();
           }
 
@@ -131,25 +177,33 @@ export function AmbientBugs() {
     }
 
     const handleResize = () => {
-      resizeDirty = true;
+      boundsDirty = true;
+      obstacleDirty = true;
     };
 
     const handleScroll = () => {
-      obstacleDirty = true;
+      viewportDirty = true;
     };
 
     window.addEventListener("resize", handleResize, { passive: true });
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     resizeObserver = new ResizeObserver(() => {
+      boundsDirty = true;
+      viewportDirty = true;
       obstacleDirty = true;
     });
+
+    resizeObserver.observe(document.documentElement);
+    resizeObserver.observe(document.body);
 
     for (const element of document.querySelectorAll<HTMLElement>(OBSTACLE_SELECTOR)) {
       resizeObserver.observe(element);
     }
 
     mutationObserver = new MutationObserver(() => {
+      boundsDirty = true;
+      viewportDirty = true;
       obstacleDirty = true;
       syncColorScheme();
 

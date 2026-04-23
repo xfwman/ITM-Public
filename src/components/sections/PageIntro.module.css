@@ -4,7 +4,7 @@
   border: 1px solid rgba(239, 243, 247, 0.1);
   background:
     linear-gradient(135deg, rgba(8, 23, 43, 0.96), rgba(15, 34, 61, 0.93));
-  box-shadow: 0 22px 54px rgba(6, 16, 28, 0.18);
+  box-shadow: var(--surface-shadow-solid);
 }
 
 .panel::before {

@@ -73,7 +73,13 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
         eyebrow={page.outcomes.eyebrow}
         title={page.outcomes.title}
       >
-        <Paper bg="var(--panel-surface-strong)" p="xl" radius="md" shadow="sm" withBorder>
+        <Paper
+          bg="var(--panel-surface-strong)"
+          className="surface-outer-shadow"
+          p="xl"
+          radius="md"
+          withBorder
+        >
           <List spacing="sm">
             {page.outcomes.items.map((item) => (
               <ListItem key={item}>{item}</ListItem>

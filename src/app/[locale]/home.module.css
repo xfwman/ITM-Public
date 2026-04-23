@@ -5,7 +5,7 @@
   background:
     linear-gradient(135deg, rgba(8, 23, 43, 0.98), rgba(15, 34, 61, 0.95));
   color: #eff3f7;
-  box-shadow: 0 24px 56px rgba(6, 16, 28, 0.18);
+  box-shadow: var(--surface-shadow-solid);
 }
 
 .capabilityStrip::before {
@@ -37,6 +37,7 @@
   border: 1px solid var(--line-soft);
   background:
     linear-gradient(180deg, rgba(255, 252, 247, 0.76), rgba(255, 248, 241, 0.9));
+  box-shadow: var(--surface-shadow-outer);
   backdrop-filter: blur(14px);
 }
 
@@ -47,7 +48,7 @@
   background:
     linear-gradient(135deg, rgba(8, 23, 43, 0.98), rgba(15, 34, 61, 0.96));
   color: #eff3f7;
-  box-shadow: 0 24px 56px rgba(6, 16, 28, 0.2);
+  box-shadow: var(--surface-shadow-solid);
 }
 
 .proofPanel::before {

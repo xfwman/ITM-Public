@@ -32,12 +32,14 @@ export class BugField {
         return this;
     }
     /**
-     * @param {number} width
-     * @param {number} height
+     * @param {number} viewport_width
+     * @param {number} viewport_height
+     * @param {number} page_width
+     * @param {number} page_height
      * @param {number} dpr
      */
-    resize(width, height, dpr) {
-        const ret = wasm.bugfield_resize(this.__wbg_ptr, width, height, dpr);
+    resize(viewport_width, viewport_height, page_width, page_height, dpr) {
+        const ret = wasm.bugfield_resize(this.__wbg_ptr, viewport_width, viewport_height, page_width, page_height, dpr);
         if (ret[1]) {
             throw takeFromExternrefTable0(ret[0]);
         }
@@ -55,6 +57,13 @@ export class BugField {
         const ptr0 = passArrayF32ToWasm0(rects, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         wasm.bugfield_set_obstacles(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
+     * @param {number} viewport_x
+     * @param {number} viewport_y
+     */
+    set_viewport(viewport_x, viewport_y) {
+        wasm.bugfield_set_viewport(this.__wbg_ptr, viewport_x, viewport_y);
     }
 }
 if (Symbol.dispose) BugField.prototype[Symbol.dispose] = BugField.prototype.free;

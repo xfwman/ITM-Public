@@ -44,7 +44,13 @@ export default async function CasesPage({ params }: CasesPageProps) {
         eyebrow={page.overview.eyebrow}
         title={page.overview.title}
       >
-        <Paper bg="var(--panel-surface-strong)" p="xl" radius="md" shadow="sm" withBorder>
+        <Paper
+          bg="var(--panel-surface-strong)"
+          className="surface-outer-shadow"
+          p="xl"
+          radius="md"
+          withBorder
+        >
           <List spacing="sm">
             {page.overview.items.map((item) => (
               <ListItem key={item}>{item}</ListItem>

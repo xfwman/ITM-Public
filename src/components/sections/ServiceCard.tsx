@@ -43,7 +43,7 @@ export function ServiceCard({
   compact = false,
 }: ServiceCardProps) {
   return (
-    <Card className={classes.card} h="100%" shadow="sm" withBorder>
+    <Card className={classes.card} h="100%" withBorder>
       <Stack gap="md" h="100%">
         <Group justify="space-between" wrap="nowrap">
           <ThemeIcon color="brand" radius="md" size={42} variant="light">

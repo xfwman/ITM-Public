@@ -9,8 +9,12 @@ const TAU: f64 = std::f64::consts::PI * 2.0;
 pub struct BugField {
     canvas: HtmlCanvasElement,
     context: CanvasRenderingContext2d,
-    width: f64,
-    height: f64,
+    viewport_width: f64,
+    viewport_height: f64,
+    page_width: f64,
+    page_height: f64,
+    viewport_x: f64,
+    viewport_y: f64,
     dpr: f64,
     bugs: Vec<Bug>,
     obstacles: Vec<Rect>,
@@ -74,8 +78,12 @@ impl BugField {
         Ok(Self {
             canvas,
             context,
-            width: 1.0,
-            height: 1.0,
+            viewport_width: 1.0,
+            viewport_height: 1.0,
+            page_width: 1.0,
+            page_height: 1.0,
+            viewport_x: 0.0,
+            viewport_y: 0.0,
             dpr: 1.0,
             bugs: Vec::new(),
             obstacles: Vec::new(),
@@ -85,19 +93,36 @@ impl BugField {
         })
     }
 
-    pub fn resize(&mut self, width: f64, height: f64, dpr: f64) -> Result<(), JsValue> {
-        self.width = width.max(1.0);
-        self.height = height.max(1.0);
+    pub fn resize(
+        &mut self,
+        viewport_width: f64,
+        viewport_height: f64,
+        page_width: f64,
+        page_height: f64,
+        dpr: f64,
+    ) -> Result<(), JsValue> {
+        self.viewport_width = viewport_width.max(1.0);
+        self.viewport_height = viewport_height.max(1.0);
+        self.page_width = page_width.max(self.viewport_width);
+        self.page_height = page_height.max(self.viewport_height);
         self.dpr = dpr.clamp(1.0, 2.0);
+        self.clamp_viewport();
 
         self.canvas
-            .set_width((self.width * self.dpr).round().max(1.0) as u32);
+            .set_width((self.viewport_width * self.dpr).round().max(1.0) as u32);
         self.canvas
-            .set_height((self.height * self.dpr).round().max(1.0) as u32);
+            .set_height((self.viewport_height * self.dpr).round().max(1.0) as u32);
 
-        self.context.set_transform(self.dpr, 0.0, 0.0, self.dpr, 0.0, 0.0)?;
+        self.context
+            .set_transform(self.dpr, 0.0, 0.0, self.dpr, 0.0, 0.0)?;
         self.sync_bug_count();
         Ok(())
+    }
+
+    pub fn set_viewport(&mut self, viewport_x: f64, viewport_y: f64) {
+        self.viewport_x = viewport_x.max(0.0);
+        self.viewport_y = viewport_y.max(0.0);
+        self.clamp_viewport();
     }
 
     pub fn set_dark_mode(&mut self, dark_mode: bool) {
@@ -132,7 +157,8 @@ impl BugField {
         };
         self.last_time = Some(timestamp);
 
-        self.context.clear_rect(0.0, 0.0, self.width, self.height);
+        self.context
+            .clear_rect(0.0, 0.0, self.viewport_width, self.viewport_height);
 
         let time_seconds = timestamp * 0.001;
         for index in 0..self.bugs.len() {
@@ -149,9 +175,9 @@ impl BugField {
 
 impl BugField {
     fn sync_bug_count(&mut self) {
-        let desired = ((self.width * self.height) / 92_000.0)
+        let desired = ((self.page_width * self.page_height) / 130_000.0)
             .round()
-            .clamp(8.0, 18.0) as usize;
+            .clamp(12.0, 56.0) as usize;
 
         match self.bugs.len().cmp(&desired) {
             std::cmp::Ordering::Less => {
@@ -166,11 +192,21 @@ impl BugField {
         }
 
         for index in 0..self.bugs.len() {
-            if self.bugs[index].x > self.width + 80.0 || self.bugs[index].y > self.height + 80.0
+            if self.bugs[index].x > self.page_width + 80.0
+                || self.bugs[index].y > self.page_height + 80.0
             {
                 self.bugs[index] = self.spawn_bug(false);
             }
         }
+    }
+
+    fn clamp_viewport(&mut self) {
+        self.viewport_x = self
+            .viewport_x
+            .clamp(0.0, (self.page_width - self.viewport_width).max(0.0));
+        self.viewport_y = self
+            .viewport_y
+            .clamp(0.0, (self.page_height - self.viewport_height).max(0.0));
     }
 
     fn spawn_bug(&mut self, edge_only: bool) -> Bug {
@@ -182,15 +218,21 @@ impl BugField {
 
         let (x, y) = if edge_only {
             match (self.rng.next_f64() * 4.0).floor() as i32 {
-                0 => (-20.0, self.rng.range(0.0, self.height)),
-                1 => (self.width + 20.0, self.rng.range(0.0, self.height)),
-                2 => (self.rng.range(0.0, self.width), -20.0),
-                _ => (self.rng.range(0.0, self.width), self.height + 20.0),
+                0 => (-20.0, self.rng.range(0.0, self.page_height)),
+                1 => (
+                    self.page_width + 20.0,
+                    self.rng.range(0.0, self.page_height),
+                ),
+                2 => (self.rng.range(0.0, self.page_width), -20.0),
+                _ => (
+                    self.rng.range(0.0, self.page_width),
+                    self.page_height + 20.0,
+                ),
             }
         } else {
             (
-                self.rng.range(-16.0, self.width + 16.0),
-                self.rng.range(-16.0, self.height + 16.0),
+                self.rng.range(-16.0, self.page_width + 16.0),
+                self.rng.range(-16.0, self.page_height + 16.0),
             )
         };
 
@@ -248,31 +290,34 @@ impl BugField {
         if bug.x < edge_margin {
             avoid_x += (edge_margin - bug.x) / edge_margin;
         }
-        if bug.x > self.width - edge_margin {
-            avoid_x -= (bug.x - (self.width - edge_margin)) / edge_margin;
+        if bug.x > self.page_width - edge_margin {
+            avoid_x -= (bug.x - (self.page_width - edge_margin)) / edge_margin;
         }
         if bug.y < edge_margin {
             avoid_y += (edge_margin - bug.y) / edge_margin;
         }
-        if bug.y > self.height - edge_margin {
-            avoid_y -= (bug.y - (self.height - edge_margin)) / edge_margin;
+        if bug.y > self.page_height - edge_margin {
+            avoid_y -= (bug.y - (self.page_height - edge_margin)) / edge_margin;
         }
 
         let wander = (time * (0.8 + bug.base_speed * 0.6) + bug.wander_phase).sin() * 0.45
             + (time * 0.43 + bug.stride_phase).cos() * 0.18;
 
-        let desired_heading = (bug.heading.sin() + avoid_y)
-            .atan2(bug.heading.cos() + avoid_x)
-            + wander * 0.16;
+        let desired_heading =
+            (bug.heading.sin() + avoid_y).atan2(bug.heading.cos() + avoid_x) + wander * 0.16;
         let delta = shortest_angle(bug.heading, desired_heading);
         bug.heading += delta * 0.12 * dt;
 
         let gait = (time * 7.5 + bug.stride_phase).sin().abs();
-        let speed = bug.base_speed * (0.82 + gait * 0.28 + avoid_x.abs() * 0.09 + avoid_y.abs() * 0.09);
+        let speed =
+            bug.base_speed * (0.82 + gait * 0.28 + avoid_x.abs() * 0.09 + avoid_y.abs() * 0.09);
         bug.x += bug.heading.cos() * speed * dt * 3.1;
         bug.y += bug.heading.sin() * speed * dt * 3.1;
 
-        if bug.x < -64.0 || bug.x > self.width + 64.0 || bug.y < -64.0 || bug.y > self.height + 64.0
+        if bug.x < -64.0
+            || bug.x > self.page_width + 64.0
+            || bug.y < -64.0
+            || bug.y > self.page_height + 64.0
         {
             bug = self.spawn_bug(true);
         }
@@ -281,6 +326,18 @@ impl BugField {
     }
 
     fn draw_bug(&self, bug: &Bug, time: f64) -> Result<(), JsValue> {
+        let screen_x = bug.x - self.viewport_x;
+        let screen_y = bug.y - self.viewport_y;
+        let margin = 48.0;
+
+        if screen_x < -margin
+            || screen_x > self.viewport_width + margin
+            || screen_y < -margin
+            || screen_y > self.viewport_height + margin
+        {
+            return Ok(());
+        }
+
         let ctx = &self.context;
         let leg_wave = (time * 9.0 + bug.stride_phase).sin();
 
@@ -311,7 +368,7 @@ impl BugField {
         };
 
         ctx.save();
-        ctx.translate(bug.x, bug.y)?;
+        ctx.translate(screen_x, screen_y)?;
         ctx.rotate(bug.heading)?;
         ctx.set_line_cap("round");
         ctx.set_line_join("round");

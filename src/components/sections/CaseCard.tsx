@@ -35,7 +35,7 @@ export function CaseCard({
   compact = false,
 }: CaseCardProps) {
   return (
-    <Card className={classes.card} h="100%" shadow="sm" withBorder>
+    <Card className={classes.card} h="100%" withBorder>
       <Stack gap="md" h="100%">
         <Group justify="space-between" wrap="nowrap">
           <Stack gap={6}>
