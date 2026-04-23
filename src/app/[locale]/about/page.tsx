@@ -60,7 +60,7 @@ export default async function AboutPage({ params }: AboutPageProps) {
             </Stack>
           </GridCol>
           <GridCol span={{ base: 12, md: 5 }}>
-            <Paper bg="var(--panel-surface-strong)" p="xl" radius="xl" shadow="sm" withBorder>
+            <Paper bg="var(--panel-surface-strong)" p="xl" radius="md" shadow="sm" withBorder>
               <Stack gap="sm">
                 <Text c="brand.6" fw={600} size="sm" tt="uppercase">
                   {page.profile.eyebrow}
@@ -76,7 +76,7 @@ export default async function AboutPage({ params }: AboutPageProps) {
                       bg="var(--panel-surface)"
                       key={item}
                       p="sm"
-                      radius="lg"
+                      radius="sm"
                       withBorder
                     >
                       <Text size="sm">{item}</Text>
@@ -100,12 +100,12 @@ export default async function AboutPage({ params }: AboutPageProps) {
               bg="var(--panel-surface)"
               key={item.title}
               p="xl"
-              radius="xl"
+              radius="md"
               shadow="sm"
               withBorder
             >
               <Stack gap="sm">
-                <ThemeIcon color="brand" radius="xl" size={42} variant="light">
+                <ThemeIcon color="brand" radius="md" size={42} variant="light">
                   <IconArrowRight size={18} />
                 </ThemeIcon>
                 <Text fw={600} size="lg">
@@ -129,7 +129,7 @@ export default async function AboutPage({ params }: AboutPageProps) {
               bg="var(--panel-surface)"
               key={item.label}
               p="xl"
-              radius="xl"
+              radius="md"
               shadow="sm"
               withBorder
             >

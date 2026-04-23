@@ -43,7 +43,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
       >
         <Grid gap="xl">
           <GridCol span={{ base: 12, md: 5 }}>
-            <Paper bg="var(--panel-surface-strong)" p="xl" radius="xl" shadow="sm" withBorder>
+            <Paper bg="var(--panel-surface-strong)" p="xl" radius="md" shadow="sm" withBorder>
               <Stack gap="lg">
                 <Stack gap="sm">
                   <IconMail size={20} />
@@ -83,7 +83,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
       </SectionShell>
 
       <SectionShell title={page.expectations.title}>
-        <Paper bg="var(--panel-surface)" p="xl" radius="xl" shadow="sm" withBorder>
+        <Paper bg="var(--panel-surface)" p="xl" radius="md" shadow="sm" withBorder>
           <List spacing="sm">
             {page.expectations.items.map((item) => (
               <ListItem key={item}>{item}</ListItem>

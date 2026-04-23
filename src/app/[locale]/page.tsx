@@ -75,7 +75,7 @@ export default async function HomePage({ params }: HomePageProps) {
       </SectionShell>
 
       <SectionShell>
-        <Paper className={classes.capabilityStrip} p={{ base: "lg", md: "xl" }} radius="xl">
+        <Paper className={classes.capabilityStrip} p={{ base: "lg", md: "xl" }} radius="md">
           <Stack gap="lg" pos="relative">
             <Text className={classes.capabilityLabel}>{page.services.eyebrow}</Text>
             <Group gap="sm">
@@ -84,7 +84,7 @@ export default async function HomePage({ params }: HomePageProps) {
                   className={classes.capabilityItem}
                   key={service.id}
                   p={{ base: "sm", md: "md" }}
-                  radius="xl"
+                  radius="sm"
                 >
                   <Text fw={600}>{messages.content.services[service.id].title}</Text>
                 </Paper>
@@ -99,7 +99,7 @@ export default async function HomePage({ params }: HomePageProps) {
         eyebrow={page.services.eyebrow}
         title={page.services.title}
       >
-        <Paper className={classes.lightFrame} p={{ base: "lg", md: "2rem" }} radius="xl">
+        <Paper className={classes.lightFrame} p={{ base: "lg", md: "2rem" }} radius="md">
           <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
             {featuredServices.map((service) => {
               const content = messages.content.services[service.id];
@@ -135,7 +135,7 @@ export default async function HomePage({ params }: HomePageProps) {
         eyebrow={page.proof.eyebrow}
         title={page.proof.title}
       >
-        <Paper className={classes.proofPanel} p={{ base: "lg", md: "2rem" }} radius="xl">
+        <Paper className={classes.proofPanel} p={{ base: "lg", md: "2rem" }} radius="md">
           <Grid gap="lg" pos="relative">
             <GridCol span={{ base: 12, lg: 5 }}>
               <SimpleGrid cols={{ base: 1, sm: 3, lg: 1 }} spacing="lg">
@@ -144,7 +144,7 @@ export default async function HomePage({ params }: HomePageProps) {
                     className={classes.statCard}
                     key={item.label}
                     p="xl"
-                    radius="xl"
+                    radius="md"
                     shadow="sm"
                     withBorder
                   >
@@ -165,7 +165,7 @@ export default async function HomePage({ params }: HomePageProps) {
                     className={classes.pillarCard}
                     key={item.title}
                     p="xl"
-                    radius="xl"
+                    radius="md"
                     shadow="sm"
                     withBorder
                   >
@@ -241,7 +241,7 @@ export default async function HomePage({ params }: HomePageProps) {
               className={classes.principleCard}
               key={item.title}
               p="xl"
-              radius="xl"
+              radius="md"
               shadow="sm"
               withBorder
             >

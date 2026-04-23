@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { Container, Stack, Text, Title } from "@mantine/core";
+import { Container, Paper, Stack, Text, Title } from "@mantine/core";
+
+import classes from "@/components/shared/SectionShell.module.css";
 
 interface SectionShellProps {
   eyebrow?: string;
@@ -18,19 +20,25 @@ export function SectionShell({
     <Container py={{ base: 52, md: 72 }} size="xl">
       <Stack gap="xl">
         {eyebrow || title || description ? (
-          <Stack gap="sm">
-            {eyebrow ? (
-              <Text c="brand.6" fw={600} size="sm" tt="uppercase">
-                {eyebrow}
-              </Text>
-            ) : null}
-            {title ? <Title order={2}>{title}</Title> : null}
-            {description ? (
-              <Text c="dimmed" maw={760} size="lg">
-                {description}
-              </Text>
-            ) : null}
-          </Stack>
+          <Paper className={classes.intro} p={{ base: "lg", md: "xl" }} radius="md">
+            <Stack gap="sm">
+              {eyebrow ? (
+                <Text className={classes.eyebrow} fw={600} size="sm" tt="uppercase">
+                  {eyebrow}
+                </Text>
+              ) : null}
+              {title ? (
+                <Title className={classes.title} order={2}>
+                  {title}
+                </Title>
+              ) : null}
+              {description ? (
+                <Text className={classes.description} maw={760} size="lg">
+                  {description}
+                </Text>
+              ) : null}
+            </Stack>
+          </Paper>
         ) : null}
         {children}
       </Stack>

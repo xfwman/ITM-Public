@@ -13,14 +13,16 @@ html {
 }
 
 body {
-  --page-bg: #eef3f6;
-  --page-bg-soft: #f8fafb;
-  --panel-surface: rgba(255, 255, 255, 0.76);
-  --panel-surface-strong: rgba(255, 255, 255, 0.94);
-  --panel-dark: #0b1118;
-  --panel-dark-soft: #131d27;
-  --line-soft: rgba(20, 28, 38, 0.1);
-  --line-strong: rgba(20, 28, 38, 0.16);
+  --header-bg: #02114b;
+  --header-text: #ffffff;
+  --page-bg: #fff4e7;
+  --page-bg-soft: #ffedda;
+  --panel-surface: rgba(255, 250, 244, 0.88);
+  --panel-surface-strong: rgba(255, 253, 248, 0.96);
+  --panel-dark: #0a1d34;
+  --panel-dark-soft: #102746;
+  --line-soft: rgba(20, 32, 54, 0.08);
+  --line-strong: rgba(20, 32, 54, 0.14);
   min-height: 100vh;
   margin: 0;
   background-color: var(--page-bg);
@@ -34,9 +36,10 @@ body::before {
   inset: 0;
   z-index: -2;
   background:
-    radial-gradient(circle at 12% 6%, rgba(112, 208, 42, 0.26), transparent 22%),
-    radial-gradient(circle at 86% 10%, rgba(196, 142, 75, 0.18), transparent 20%),
-    linear-gradient(180deg, #091019 0, #0b1118 31rem, var(--page-bg-soft) 31rem, var(--page-bg) 100%);
+    radial-gradient(circle at 16% 10%, rgba(255, 194, 86, 0.46), transparent 24%),
+    radial-gradient(circle at 84% 14%, rgba(255, 97, 0, 0.38), transparent 20%),
+    radial-gradient(circle at 56% 48%, rgba(255, 162, 48, 0.24), transparent 34%),
+    linear-gradient(180deg, #ff7200 0%, #ff7a00 18%, #ff8610 40%, #ff9f32 64%, #ffe0b6 84%, #fff4e7 100%);
 }
 
 body::after {
@@ -45,20 +48,19 @@ body::after {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(20, 28, 38, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 28, 38, 0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 82%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 22%),
+    radial-gradient(circle at 50% 18%, rgba(255, 238, 212, 0.18), transparent 28%);
 }
 
 [data-mantine-color-scheme="dark"] body {
-  --page-bg: #070b10;
-  --page-bg-soft: #0a1016;
-  --panel-surface: rgba(14, 22, 31, 0.82);
-  --panel-surface-strong: rgba(18, 28, 38, 0.92);
-  --panel-dark: #05090d;
-  --panel-dark-soft: #0f1720;
+  --header-bg: #02114b;
+  --page-bg: #120602;
+  --page-bg-soft: #1d0b04;
+  --panel-surface: rgba(22, 18, 18, 0.82);
+  --panel-surface-strong: rgba(31, 24, 22, 0.92);
+  --panel-dark: #08172b;
+  --panel-dark-soft: #0d223d;
   --line-soft: rgba(239, 243, 247, 0.08);
   --line-strong: rgba(239, 243, 247, 0.16);
   background-color: var(--page-bg);
@@ -67,15 +69,15 @@ body::after {
 
 [data-mantine-color-scheme="dark"] body::before {
   background:
-    radial-gradient(circle at 12% 8%, rgba(112, 208, 42, 0.18), transparent 22%),
-    radial-gradient(circle at 88% 10%, rgba(196, 142, 75, 0.14), transparent 18%),
-    linear-gradient(180deg, #05090d, #0a1016 34rem, #070b10 100%);
+    radial-gradient(circle at 18% 10%, rgba(255, 174, 74, 0.28), transparent 24%),
+    radial-gradient(circle at 84% 14%, rgba(255, 97, 0, 0.24), transparent 20%),
+    linear-gradient(180deg, #8f3200 0%, #b54000 26%, #7a2800 58%, #1d0c05 84%, #120602 100%);
 }
 
 [data-mantine-color-scheme="dark"] body::after {
-  background-image:
-    linear-gradient(rgba(239, 243, 247, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(239, 243, 247, 0.04) 1px, transparent 1px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 24%),
+    radial-gradient(circle at 50% 18%, rgba(255, 214, 168, 0.1), transparent 28%);
 }
 
 main {
@@ -105,10 +107,10 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid rgba(112, 208, 42, 0.8);
+  outline: 2px solid rgba(229, 130, 48, 0.82);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: rgba(112, 208, 42, 0.28);
+  background: rgba(238, 150, 77, 0.34);
 }

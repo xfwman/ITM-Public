@@ -1,10 +1,11 @@
 .panel {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(239, 243, 247, 0.08);
+  border: 1px solid rgba(239, 243, 247, 0.1);
   background:
-    linear-gradient(135deg, rgba(8, 14, 21, 0.98), rgba(18, 30, 42, 0.95));
+    linear-gradient(135deg, rgba(8, 23, 43, 0.98), rgba(15, 34, 61, 0.95));
   color: white;
+  box-shadow: 0 24px 56px rgba(6, 16, 28, 0.2);
 }
 
 .panel::before {
@@ -12,8 +13,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 82% 18%, rgba(112, 208, 42, 0.2), transparent 22%),
-    radial-gradient(circle at 12% 100%, rgba(196, 142, 75, 0.18), transparent 24%);
+    radial-gradient(circle at 82% 18%, rgba(248, 210, 170, 0.18), transparent 22%),
+    radial-gradient(circle at 12% 100%, rgba(229, 130, 48, 0.18), transparent 24%);
   pointer-events: none;
 }
 
@@ -22,6 +23,20 @@
   position: absolute;
   inset-block-start: 0;
   inset-inline: 0;
-  block-size: 3px;
-  background: linear-gradient(90deg, rgba(112, 208, 42, 0.95), rgba(196, 142, 75, 0.7));
+  block-size: 2px;
+  background: linear-gradient(90deg, rgba(243, 179, 119, 0.92), rgba(229, 130, 48, 0.72));
+}
+
+.primaryButton {
+  box-shadow: 0 12px 28px rgba(118, 62, 22, 0.24);
+}
+
+.secondaryButton {
+  border: 1px solid rgba(239, 243, 247, 0.14);
+  background: rgba(255, 250, 245, 0.06);
+  color: #eff3f7;
+}
+
+.secondaryButton:hover {
+  background: rgba(255, 250, 245, 0.1);
 }

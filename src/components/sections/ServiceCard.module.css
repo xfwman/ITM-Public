@@ -1,10 +1,11 @@
 .card {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(239, 243, 247, 0.08);
+  border: 1px solid var(--line-soft);
   background:
-    linear-gradient(180deg, rgba(9, 16, 25, 0.98), rgba(18, 28, 38, 0.96));
-  color: #eff3f7;
+    linear-gradient(180deg, rgba(255, 252, 248, 0.94), rgba(255, 247, 239, 0.86));
+  color: #141e2a;
+  box-shadow: 0 18px 44px rgba(122, 72, 31, 0.08);
 }
 
 .card::before {
@@ -15,7 +16,7 @@
   inline-size: 12rem;
   block-size: 12rem;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(112, 208, 42, 0.16), transparent 62%);
+  background: radial-gradient(circle, rgba(243, 179, 119, 0.18), transparent 62%);
   pointer-events: none;
 }
 
@@ -25,7 +26,8 @@
   inset-inline: 1.5rem;
   inset-block-end: 1rem;
   block-size: 1px;
-  background: linear-gradient(90deg, rgba(112, 208, 42, 0.9), transparent);
+  background:
+    linear-gradient(90deg, rgba(20, 48, 81, 0.28), rgba(229, 130, 48, 0.32), transparent);
 }
 
 .label {
@@ -37,17 +39,17 @@
 }
 
 .title {
-  color: #ffffff;
+  color: #10203a;
   font-family: var(--font-heading), sans-serif;
   letter-spacing: -0.04em;
 }
 
 .summary {
-  color: rgba(239, 243, 247, 0.76);
+  color: #35485f;
 }
 
 .description {
-  color: rgba(239, 243, 247, 0.68);
+  color: #485d76;
 }
 
 .subheading {
@@ -59,5 +61,45 @@
 }
 
 .list {
-  color: rgba(239, 243, 247, 0.86);
+  color: #243447;
+}
+
+[data-mantine-color-scheme="dark"] .card {
+  border-color: var(--line-soft);
+  background:
+    linear-gradient(180deg, rgba(10, 29, 52, 0.94), rgba(8, 23, 43, 0.98));
+  color: #eff3f7;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+}
+
+[data-mantine-color-scheme="dark"] .card::before {
+  background: radial-gradient(circle, rgba(229, 130, 48, 0.18), transparent 62%);
+}
+
+[data-mantine-color-scheme="dark"] .card::after {
+  background: linear-gradient(90deg, rgba(243, 179, 119, 0.82), transparent);
+}
+
+[data-mantine-color-scheme="dark"] .label {
+  color: rgba(239, 243, 247, 0.52);
+}
+
+[data-mantine-color-scheme="dark"] .title {
+  color: #ffffff;
+}
+
+[data-mantine-color-scheme="dark"] .summary {
+  color: rgba(239, 243, 247, 0.78);
+}
+
+[data-mantine-color-scheme="dark"] .description {
+  color: rgba(239, 243, 247, 0.68);
+}
+
+[data-mantine-color-scheme="dark"] .subheading {
+  color: rgba(239, 243, 247, 0.52);
+}
+
+[data-mantine-color-scheme="dark"] .list {
+  color: rgba(239, 243, 247, 0.84);
 }

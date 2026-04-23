@@ -107,13 +107,17 @@ export function SiteHeader({
           </Group>
 
           <Group gap="sm" visibleFrom="md" wrap="nowrap">
-            <ThemeToggle content={theme} />
+            <ThemeToggle className={classes.utilityControl} content={theme} />
             <LanguageSwitcher
+              buttonClassName={classes.utilityControl}
               content={language}
+              dropdownClassName={classes.menuDropdown}
               locale={locale}
               pathname={pathname || `/${locale}`}
             />
             <Button
+              className={classes.ctaButton}
+              color="sand"
               component={Link}
               href={`/${locale}/contact`}
               variant="filled"
@@ -123,9 +127,11 @@ export function SiteHeader({
           </Group>
 
           <Group gap="xs" hiddenFrom="md" wrap="nowrap">
-            <ThemeToggle content={theme} />
+            <ThemeToggle className={classes.utilityControl} content={theme} />
             <Burger
               aria-label={navigation.menu}
+              className={classes.burger}
+              color="white"
               onClick={toggle}
               opened={opened}
               size="sm"
@@ -139,10 +145,15 @@ export function SiteHeader({
           content: classes.drawerContent,
         }}
         onClose={close}
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 6,
+          color: "#02114b",
+        }}
         opened={opened}
         padding="lg"
         position="right"
-        title={brand.name}
+        title={<Text className={classes.drawerTitle}>{brand.name}</Text>}
       >
         <Stack gap="lg">
           <Anchor
@@ -174,13 +185,21 @@ export function SiteHeader({
 
           <Group grow>
             <LanguageSwitcher
+              buttonClassName={classes.utilityControl}
               content={language}
+              dropdownClassName={classes.menuDropdown}
               locale={locale}
               pathname={pathname || `/${locale}`}
             />
           </Group>
 
-          <Button component={Link} href={`/${locale}/contact`} onClick={close}>
+          <Button
+            className={classes.ctaButton}
+            color="sand"
+            component={Link}
+            href={`/${locale}/contact`}
+            onClick={close}
+          >
             {navigation.contactCta}
           </Button>
         </Stack>

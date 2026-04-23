@@ -1,10 +1,11 @@
 .capabilityStrip {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(239, 243, 247, 0.08);
+  border: 1px solid rgba(239, 243, 247, 0.1);
   background:
-    linear-gradient(135deg, rgba(8, 14, 21, 0.98), rgba(18, 30, 42, 0.95));
+    linear-gradient(135deg, rgba(8, 23, 43, 0.98), rgba(15, 34, 61, 0.95));
   color: #eff3f7;
+  box-shadow: 0 24px 56px rgba(6, 16, 28, 0.18);
 }
 
 .capabilityStrip::before {
@@ -12,13 +13,13 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 10% 10%, rgba(112, 208, 42, 0.16), transparent 18%),
-    radial-gradient(circle at 94% 12%, rgba(196, 142, 75, 0.12), transparent 18%);
+    radial-gradient(circle at 10% 10%, rgba(248, 210, 170, 0.16), transparent 18%),
+    radial-gradient(circle at 94% 12%, rgba(229, 130, 48, 0.14), transparent 18%);
   pointer-events: none;
 }
 
 .capabilityLabel {
-  color: rgba(239, 243, 247, 0.54);
+  color: rgba(248, 224, 198, 0.82);
   font-size: 0.74rem;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -26,25 +27,27 @@
 }
 
 .capabilityItem {
-  border: 1px solid rgba(239, 243, 247, 0.08);
-  border-radius: 999px;
-  background: rgba(239, 243, 247, 0.04);
+  border: 1px solid rgba(239, 243, 247, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 250, 245, 0.08);
   color: #eff3f7;
 }
 
 .lightFrame {
   border: 1px solid var(--line-soft);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.96));
+    linear-gradient(180deg, rgba(255, 252, 247, 0.76), rgba(255, 248, 241, 0.9));
+  backdrop-filter: blur(14px);
 }
 
 .proofPanel {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(239, 243, 247, 0.08);
+  border: 1px solid rgba(239, 243, 247, 0.1);
   background:
-    linear-gradient(135deg, rgba(9, 16, 25, 0.98), rgba(18, 29, 39, 0.96));
+    linear-gradient(135deg, rgba(8, 23, 43, 0.98), rgba(15, 34, 61, 0.96));
   color: #eff3f7;
+  box-shadow: 0 24px 56px rgba(6, 16, 28, 0.2);
 }
 
 .proofPanel::before {
@@ -52,19 +55,21 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 16% 16%, rgba(112, 208, 42, 0.18), transparent 18%),
-    radial-gradient(circle at 92% 20%, rgba(196, 142, 75, 0.12), transparent 18%);
+    radial-gradient(circle at 16% 16%, rgba(248, 210, 170, 0.16), transparent 18%),
+    radial-gradient(circle at 92% 20%, rgba(229, 130, 48, 0.14), transparent 18%);
   pointer-events: none;
 }
 
 .statCard {
-  border: 1px solid rgba(239, 243, 247, 0.08);
-  background: rgba(239, 243, 247, 0.05);
+  border: 1px solid rgba(239, 243, 247, 0.1);
+  background: rgba(255, 250, 245, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 .pillarCard {
-  border: 1px solid rgba(239, 243, 247, 0.08);
-  background: rgba(239, 243, 247, 0.05);
+  border: 1px solid rgba(239, 243, 247, 0.1);
+  background: rgba(255, 250, 245, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 .principleCard {
@@ -72,6 +77,7 @@
   overflow: hidden;
   border: 1px solid var(--line-soft);
   background: var(--panel-surface-strong);
+  backdrop-filter: blur(12px);
 }
 
 .principleCard::before {
@@ -79,6 +85,6 @@
   position: absolute;
   inset-block-start: 0;
   inset-inline: 0;
-  block-size: 3px;
-  background: linear-gradient(90deg, rgba(112, 208, 42, 0.9), rgba(196, 142, 75, 0.6));
+  block-size: 2px;
+  background: linear-gradient(90deg, rgba(31, 67, 114, 0.9), rgba(229, 130, 48, 0.52));
 }

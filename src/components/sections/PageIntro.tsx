@@ -10,9 +10,9 @@ interface PageIntroProps {
 
 export function PageIntro({ eyebrow, title, description }: PageIntroProps) {
   return (
-    <Paper className={classes.panel} p={{ base: "xl", md: "2rem" }} radius="xl">
+    <Paper className={classes.panel} p={{ base: "xl", md: "2rem" }} radius="md">
       <Stack gap="lg" pos="relative">
-        <Badge color="brand" variant="filled">
+        <Badge color="sand" variant="filled">
           {eyebrow}
         </Badge>
         <Stack gap="md">

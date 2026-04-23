@@ -1,0 +1,39 @@
+.intro {
+  border: 1px solid var(--line-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.92), rgba(255, 247, 236, 0.84));
+  box-shadow: 0 18px 48px rgba(122, 72, 31, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.eyebrow {
+  color: var(--mantine-color-brand-7);
+  letter-spacing: 0.16em;
+}
+
+.title {
+  color: #10203a;
+}
+
+.description {
+  color: #485d76;
+}
+
+[data-mantine-color-scheme="dark"] .intro {
+  border-color: var(--line-strong);
+  background:
+    linear-gradient(180deg, rgba(10, 29, 52, 0.84), rgba(16, 39, 70, 0.74));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+}
+
+[data-mantine-color-scheme="dark"] .eyebrow {
+  color: var(--mantine-color-sand-3);
+}
+
+[data-mantine-color-scheme="dark"] .title {
+  color: #ffffff;
+}
+
+[data-mantine-color-scheme="dark"] .description {
+  color: rgba(239, 243, 247, 0.72);
+}

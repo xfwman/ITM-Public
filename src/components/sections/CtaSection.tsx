@@ -29,7 +29,7 @@ export function CtaSection({
   secondaryHref,
 }: CtaSectionProps) {
   return (
-    <Paper className={classes.panel} p={{ base: "xl", md: "2rem" }} radius="xl">
+    <Paper className={classes.panel} p={{ base: "xl", md: "2rem" }} radius="md">
       <Stack gap="lg" pos="relative">
         <Stack gap="sm">
           <Title c="white" order={2}>
@@ -43,10 +43,11 @@ export function CtaSection({
         <Group>
           <Link href={primaryHref} style={{ textDecoration: "none" }}>
             <Button
+              className={classes.primaryButton}
               color="sand"
               component="span"
               rightSection={<IconArrowRight size={18} />}
-              variant="white"
+              variant="filled"
             >
               {primaryLabel}
             </Button>
@@ -54,7 +55,11 @@ export function CtaSection({
 
           {secondaryLabel && secondaryHref ? (
             <Link href={secondaryHref} style={{ textDecoration: "none" }}>
-              <Button color="gray" component="span" variant="transparent">
+              <Button
+                className={classes.secondaryButton}
+                component="span"
+                variant="default"
+              >
                 {secondaryLabel}
               </Button>
             </Link>

@@ -2,10 +2,10 @@
   position: sticky;
   inset-block-start: 0;
   z-index: 40;
-  background: rgba(9, 16, 25, 0.8);
-  backdrop-filter: blur(18px);
+  background: var(--header-bg);
+  backdrop-filter: blur(14px);
   border-block-end: 1px solid rgba(239, 243, 247, 0.08);
-  box-shadow: 0 10px 30px rgba(4, 8, 13, 0.18);
+  box-shadow: 0 14px 34px rgba(2, 8, 16, 0.22);
 }
 
 .brandLink {
@@ -29,36 +29,33 @@
 
 .navLink {
   position: relative;
-  padding: 0.55rem 0.9rem;
-  border-radius: 999px;
-  color: rgba(239, 243, 247, 0.68);
-  font-weight: 500;
+  padding: 0.35rem 0;
+  color: rgba(239, 243, 247, 0.72);
+  font-weight: 550;
   transition:
-    background-color 140ms ease,
     color 140ms ease,
-    transform 140ms ease;
+    opacity 140ms ease;
 }
 
 .navLink::after {
   content: "";
   position: absolute;
-  inset-inline: 0.75rem;
-  inset-block-end: 0.2rem;
-  block-size: 1px;
+  inset-inline: 0;
+  inset-block-end: -0.7rem;
+  block-size: 2px;
   border-radius: 999px;
-  background: var(--mantine-color-brand-5);
+  background:
+    linear-gradient(90deg, rgba(243, 179, 119, 0.94), rgba(229, 130, 48, 0.92));
   transform: scaleX(0);
-  transform-origin: center;
+  transform-origin: left center;
   transition: transform 140ms ease;
 }
 
 .navLink:hover {
-  background: rgba(239, 243, 247, 0.06);
   color: #eff3f7;
 }
 
 .navLink[data-active="true"] {
-  background: rgba(239, 243, 247, 0.08);
   color: #eff3f7;
 }
 
@@ -66,7 +63,71 @@
   transform: scaleX(1);
 }
 
-.drawerContent {
+.utilityControl {
+  border: 1px solid rgba(239, 243, 247, 0.14);
+  border-radius: 12px;
+  background: rgba(239, 243, 247, 0.06);
+  color: #eff3f7;
+  backdrop-filter: blur(12px);
+  box-shadow: none;
+}
+
+.utilityControl:hover {
+  background: rgba(239, 243, 247, 0.1);
+}
+
+.menuDropdown {
+  border: 1px solid rgba(239, 243, 247, 0.1);
+  background: var(--header-bg);
+  backdrop-filter: blur(18px);
+}
+
+.menuDropdown :global(.mantine-Menu-label) {
+  color: rgba(239, 243, 247, 0.54);
+}
+
+.menuDropdown :global(.mantine-Menu-item) {
+  color: #eff3f7;
+}
+
+.menuDropdown :global(.mantine-Menu-item:hover) {
+  background: rgba(239, 243, 247, 0.08);
+}
+
+.ctaButton {
+  border: none;
   background:
-    linear-gradient(180deg, rgba(9, 16, 25, 0.99), rgba(13, 20, 30, 0.99));
+    linear-gradient(135deg, var(--mantine-color-sand-4), var(--mantine-color-sand-5));
+  color: #10203a;
+  box-shadow: 0 10px 24px rgba(118, 62, 22, 0.22);
+}
+
+.ctaButton:hover {
+  background:
+    linear-gradient(135deg, var(--mantine-color-sand-3), var(--mantine-color-sand-4));
+}
+
+.burger {
+  border: 1px solid rgba(239, 243, 247, 0.14);
+  border-radius: 12px;
+  background: rgba(239, 243, 247, 0.06);
+  color: #eff3f7;
+}
+
+.drawerTitle {
+  color: #ffffff;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.drawerContent {
+  background: var(--header-bg);
+}
+
+@media (max-width: 48em) {
+  .navLink {
+    padding: 0.25rem 0;
+    font-size: 1.05rem;
+  }
 }

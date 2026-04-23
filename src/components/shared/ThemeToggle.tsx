@@ -9,9 +9,10 @@ interface ThemeToggleProps {
     light: string;
     dark: string;
   };
+  className?: string;
 }
 
-export function ThemeToggle({ content }: ThemeToggleProps) {
+export function ThemeToggle({ content, className }: ThemeToggleProps) {
   const { setColorScheme } = useMantineColorScheme();
   const colorScheme = useComputedColorScheme("light", {
     getInitialValueInEffect: true,
@@ -25,10 +26,11 @@ export function ThemeToggle({ content }: ThemeToggleProps) {
     >
       <ActionIcon
         aria-label={content.toggle}
+        className={className}
         onClick={() => setColorScheme(nextColorScheme)}
-        radius="xl"
+        radius="md"
         size="lg"
-        variant="default"
+        variant="subtle"
       >
         {colorScheme === "dark" ? (
           <IconSunHigh size={18} />

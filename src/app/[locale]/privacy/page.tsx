@@ -34,7 +34,7 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
       </SectionShell>
 
       <SectionShell>
-        <Paper bg="var(--panel-surface-strong)" p={{ base: "xl", md: "2rem" }} radius="xl" shadow="sm" withBorder>
+        <Paper bg="var(--panel-surface-strong)" p={{ base: "xl", md: "2rem" }} radius="md" shadow="sm" withBorder>
           <Stack gap="xl">
             {page.sections.map((section) => (
               <Stack gap="sm" key={section.title}>

@@ -4,7 +4,7 @@
   margin-block-start: 4rem;
   border-block-start: 1px solid rgba(239, 243, 247, 0.08);
   background:
-    linear-gradient(180deg, rgba(9, 16, 25, 0.98), rgba(7, 11, 16, 1));
+    linear-gradient(180deg, rgba(7, 20, 36, 0.98), rgba(5, 16, 29, 1));
   color: #eff3f7;
 }
 
@@ -13,13 +13,14 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 12% 14%, rgba(112, 208, 42, 0.16), transparent 20%),
-    radial-gradient(circle at 88% 0%, rgba(196, 142, 75, 0.1), transparent 22%);
+    radial-gradient(circle at 14% 12%, rgba(243, 179, 119, 0.16), transparent 20%),
+    radial-gradient(circle at 86% 0%, rgba(229, 130, 48, 0.12), transparent 22%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 30%);
   pointer-events: none;
 }
 
 .link {
-  color: rgba(239, 243, 247, 0.7);
+  color: rgba(239, 243, 247, 0.72);
   transition: color 140ms ease;
 }
 

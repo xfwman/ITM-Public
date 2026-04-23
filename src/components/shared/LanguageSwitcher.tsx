@@ -17,12 +17,16 @@ interface LanguageSwitcherProps {
       da: string;
     };
   };
+  buttonClassName?: string;
+  dropdownClassName?: string;
 }
 
 export function LanguageSwitcher({
   locale,
   pathname,
   content,
+  buttonClassName,
+  dropdownClassName,
 }: LanguageSwitcherProps) {
   const router = useRouter();
 
@@ -34,15 +38,16 @@ export function LanguageSwitcher({
     <Menu shadow="md" width={180}>
       <Menu.Target>
         <Button
+          className={buttonClassName}
           leftSection={<IconWorld size={16} />}
-          radius="xl"
-          variant="default"
+          radius="md"
+          variant="subtle"
         >
           {content.options[locale]}
         </Button>
       </Menu.Target>
 
-      <Menu.Dropdown>
+      <Menu.Dropdown className={dropdownClassName}>
         <Menu.Label>{content.label}</Menu.Label>
         {(["en", "da"] as const).map((option) => (
           <Menu.Item

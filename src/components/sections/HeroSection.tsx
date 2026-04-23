@@ -56,11 +56,11 @@ export function HeroSection({
   spotlights,
 }: HeroSectionProps) {
   return (
-    <Paper className={classes.heroCard} p={{ base: "xl", md: "2rem" }} radius="xl">
+    <Paper className={classes.heroCard} p={{ base: "xl", md: "2rem" }} radius="md">
       <Grid align="center" gap="xl" pos="relative">
         <GridCol span={{ base: 12, md: 7 }}>
           <Stack gap="lg">
-            <Badge color="brand" variant="filled">
+            <Badge color="sand" variant="filled">
               {eyebrow}
             </Badge>
 
@@ -76,7 +76,8 @@ export function HeroSection({
             <Group>
               <Link href={primaryHref} style={{ textDecoration: "none" }}>
                 <Button
-                  color="brand"
+                  className={classes.primaryButton}
+                  color="sand"
                   component="span"
                   rightSection={<IconArrowRight size={18} />}
                   size="md"
@@ -86,10 +87,10 @@ export function HeroSection({
               </Link>
               <Link href={secondaryHref} style={{ textDecoration: "none" }}>
                 <Button
-                  color="gray"
+                  className={classes.secondaryButton}
                   component="span"
                   size="md"
-                  variant="light"
+                  variant="default"
                 >
                   {secondaryLabel}
                 </Button>
@@ -98,7 +99,7 @@ export function HeroSection({
 
             <List
               icon={
-                <ThemeIcon color="brand" radius="xl" size={24} variant="light">
+                <ThemeIcon color="sand" radius="md" size={24} variant="light">
                   <IconCheck size={14} />
                 </ThemeIcon>
               }
@@ -113,7 +114,7 @@ export function HeroSection({
 
             <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm">
               {metrics.map((metric) => (
-                <Paper className={classes.metricCard} key={metric.label} p="md" radius="lg">
+                <Paper className={classes.metricCard} key={metric.label} p="md" radius="md">
                   <Stack gap={4}>
                     <Text className={classes.metricValue}>{metric.value}</Text>
                     <Text c="rgba(239, 243, 247, 0.6)" size="sm">
@@ -128,7 +129,7 @@ export function HeroSection({
 
         <GridCol span={{ base: 12, md: 5 }}>
           <Stack gap="md">
-            <Paper className={classes.heroPanel} p="xl" radius="xl">
+            <Paper className={classes.heroPanel} p="xl" radius="md">
               <Stack gap="md">
                 <Text c="white" fw={600}>
                   {panelTitle}
@@ -148,13 +149,13 @@ export function HeroSection({
                   href={spotlight.href}
                   key={spotlight.title}
                 >
-                  <Paper className={classes.spotlightCard} p="lg" radius="xl">
+                  <Paper className={classes.spotlightCard} p="lg" radius="md">
                     <Stack gap="sm">
                       <Group justify="space-between" wrap="nowrap">
                         <Text className={classes.spotlightLabel}>
                           {spotlight.label}
                         </Text>
-                        <ThemeIcon color="brand" radius="xl" size={30} variant="light">
+                        <ThemeIcon color="sand" radius="md" size={30} variant="light">
                           <IconArrowUpRight size={16} />
                         </ThemeIcon>
                       </Group>

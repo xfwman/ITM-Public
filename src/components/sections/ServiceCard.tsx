@@ -46,7 +46,7 @@ export function ServiceCard({
     <Card className={classes.card} h="100%" shadow="sm" withBorder>
       <Stack gap="md" h="100%">
         <Group justify="space-between" wrap="nowrap">
-          <ThemeIcon color="brand" radius="xl" size={42} variant="light">
+          <ThemeIcon color="brand" radius="md" size={42} variant="light">
             <Icon size={20} />
           </ThemeIcon>
           <Text className={classes.label}>{sectionLabel}</Text>
@@ -75,7 +75,7 @@ export function ServiceCard({
 
         <Group gap="xs">
           {engagementTags.map((item) => (
-            <Badge color="brand" key={item} variant="light">
+            <Badge color="sand" key={item} variant="light">
               {item}
             </Badge>
           ))}

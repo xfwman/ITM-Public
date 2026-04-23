@@ -40,11 +40,11 @@ export function CaseCard({
         <Group justify="space-between" wrap="nowrap">
           <Stack gap={6}>
             <Text className={classes.label}>{sectionLabel}</Text>
-            <ThemeIcon color="brand" radius="xl" size={42} variant="light">
+            <ThemeIcon color="brand" radius="md" size={42} variant="light">
               <Icon size={20} />
             </ThemeIcon>
           </Stack>
-          <ThemeIcon color="sand" radius="xl" size={34} variant="light">
+          <ThemeIcon color="sand" radius="md" size={34} variant="light">
             <IconArrowRight size={16} />
           </ThemeIcon>
         </Group>

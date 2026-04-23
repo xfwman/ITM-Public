@@ -73,7 +73,7 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
         eyebrow={page.outcomes.eyebrow}
         title={page.outcomes.title}
       >
-        <Paper bg="var(--panel-surface-strong)" p="xl" radius="xl" shadow="sm" withBorder>
+        <Paper bg="var(--panel-surface-strong)" p="xl" radius="md" shadow="sm" withBorder>
           <List spacing="sm">
             {page.outcomes.items.map((item) => (
               <ListItem key={item}>{item}</ListItem>
@@ -93,7 +93,7 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
               bg="var(--panel-surface)"
               key={audience}
               p="xl"
-              radius="xl"
+              radius="md"
               shadow="sm"
               withBorder
             >
@@ -114,7 +114,7 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
               bg="var(--panel-surface)"
               key={model}
               p="xl"
-              radius="xl"
+              radius="md"
               shadow="sm"
               withBorder
             >
