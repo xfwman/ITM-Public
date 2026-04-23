@@ -1,5 +1,5 @@
 .intro {
-  border: 1px solid var(--line-soft);
+  border: var(--box-edge-width) solid var(--line-soft);
   background:
     linear-gradient(180deg, rgba(255, 253, 248, 0.92), rgba(255, 247, 236, 0.84));
   box-shadow: var(--surface-shadow-outer);

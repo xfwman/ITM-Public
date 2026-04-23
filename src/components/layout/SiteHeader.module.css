@@ -4,7 +4,7 @@
   z-index: 40;
   background: var(--header-bg);
   backdrop-filter: blur(14px);
-  border-block-end: 1px solid rgba(239, 243, 247, 0.08);
+  border-block-end: var(--box-edge-width) solid var(--line-soft);
   box-shadow: 0 14px 34px rgba(2, 8, 16, 0.22);
 }
 
@@ -64,7 +64,7 @@
 }
 
 .utilityControl {
-  border: 1px solid rgba(239, 243, 247, 0.14);
+  border: var(--box-edge-width) solid var(--line-soft);
   border-radius: 12px;
   background: rgba(239, 243, 247, 0.06);
   color: #eff3f7;
@@ -77,7 +77,7 @@
 }
 
 .menuDropdown {
-  border: 1px solid rgba(239, 243, 247, 0.1);
+  border: var(--box-edge-width) solid var(--line-soft);
   background: var(--header-bg);
   backdrop-filter: blur(18px);
 }
@@ -108,7 +108,7 @@
 }
 
 .burger {
-  border: 1px solid rgba(239, 243, 247, 0.14);
+  border: var(--box-edge-width) solid var(--line-soft);
   border-radius: 12px;
   background: rgba(239, 243, 247, 0.06);
   color: #eff3f7;

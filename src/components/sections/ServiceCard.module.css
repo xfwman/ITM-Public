@@ -1,7 +1,7 @@
 .card {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--line-soft);
+  border: var(--box-edge-width) solid var(--line-soft);
   background:
     linear-gradient(180deg, rgba(255, 252, 248, 0.94), rgba(255, 247, 239, 0.86));
   color: #141e2a;

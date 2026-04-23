@@ -15,14 +15,17 @@ html {
 body {
   --header-bg: #02114b;
   --header-text: #ffffff;
+  --box-edge-color: RoyalBlue;
+  --box-edge-width: 2px;
   --page-bg: #fff4e7;
   --page-bg-soft: #ffedda;
   --panel-surface: rgba(255, 250, 244, 0.88);
   --panel-surface-strong: rgba(255, 253, 248, 0.96);
   --panel-dark: #0a1d34;
   --panel-dark-soft: #102746;
-  --line-soft: rgba(20, 32, 54, 0.08);
-  --line-strong: rgba(20, 32, 54, 0.14);
+  --line-soft: var(--box-edge-color);
+  --line-strong: var(--box-edge-color);
+  --mantine-color-default-border: var(--box-edge-color);
   --surface-shadow-outer:
     0 14px 28px rgba(94, 49, 12, 0.14),
     0 3px 10px rgba(94, 49, 12, 0.1);
@@ -61,14 +64,16 @@ body::after {
 
 [data-mantine-color-scheme="dark"] body {
   --header-bg: #02114b;
+  --box-edge-color: RoyalBlue;
   --page-bg: #120602;
   --page-bg-soft: #1d0b04;
   --panel-surface: rgba(22, 18, 18, 0.82);
   --panel-surface-strong: rgba(31, 24, 22, 0.92);
   --panel-dark: #08172b;
   --panel-dark-soft: #0d223d;
-  --line-soft: rgba(239, 243, 247, 0.08);
-  --line-strong: rgba(239, 243, 247, 0.16);
+  --line-soft: var(--box-edge-color);
+  --line-strong: var(--box-edge-color);
+  --mantine-color-default-border: var(--box-edge-color);
   --surface-shadow-outer:
     0 16px 34px rgba(0, 0, 0, 0.28),
     0 4px 14px rgba(0, 0, 0, 0.2);
@@ -94,6 +99,13 @@ body::after {
 
 main {
   overflow: clip;
+}
+
+.mantine-Paper-root[data-with-border],
+.mantine-Card-root[data-with-border],
+.mantine-Menu-dropdown {
+  border-color: var(--box-edge-color) !important;
+  border-width: var(--box-edge-width) !important;
 }
 
 .surface-outer-shadow {

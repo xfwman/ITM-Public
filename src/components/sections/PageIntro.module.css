@@ -1,7 +1,7 @@
 .panel {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(239, 243, 247, 0.1);
+  border: var(--box-edge-width) solid var(--line-soft);
   background:
     linear-gradient(135deg, rgba(8, 23, 43, 0.96), rgba(15, 34, 61, 0.93));
   box-shadow: var(--surface-shadow-solid);

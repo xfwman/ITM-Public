@@ -68,8 +68,8 @@ export const theme = createTheme({
     ],
   },
   other: {
-    borderColor: "rgba(20, 28, 38, 0.12)",
-    borderColorDark: "rgba(239, 243, 247, 0.12)",
+    borderColor: "RoyalBlue",
+    borderColorDark: "RoyalBlue",
     colorRoles: {
       headerBackground: "#02114b",
       headerForeground: "#ffffff",
