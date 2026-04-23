@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build:ambient-bugs": "node scripts/build-ambient-bugs.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

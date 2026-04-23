@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { MantineProvider } from "@mantine/core";
 
+import { AmbientStage } from "@/components/layout/AmbientStage";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { locales } from "@/i18n/config";
@@ -53,7 +54,9 @@ export default async function LocaleLayout({
         navigation={messages.shared.navigation}
         theme={messages.shared.theme}
       />
-      <main>{children}</main>
+      <AmbientStage>
+        <main>{children}</main>
+      </AmbientStage>
       <SiteFooter
         brand={messages.shared.brand}
         content={messages.shared.footer}
