@@ -1,0 +1,28 @@
+.root {
+  position: relative;
+  overflow: hidden;
+  margin-block-start: 4rem;
+  border-block-start: 1px solid rgba(239, 243, 247, 0.08);
+  background:
+    linear-gradient(180deg, rgba(9, 16, 25, 0.98), rgba(7, 11, 16, 1));
+  color: #eff3f7;
+}
+
+.root::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 14%, rgba(112, 208, 42, 0.16), transparent 20%),
+    radial-gradient(circle at 88% 0%, rgba(196, 142, 75, 0.1), transparent 22%);
+  pointer-events: none;
+}
+
+.link {
+  color: rgba(239, 243, 247, 0.7);
+  transition: color 140ms ease;
+}
+
+.link:hover {
+  color: #eff3f7;
+}

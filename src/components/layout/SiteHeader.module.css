@@ -2,9 +2,10 @@
   position: sticky;
   inset-block-start: 0;
   z-index: 40;
-  background: rgba(255, 252, 247, 0.78);
+  background: rgba(9, 16, 25, 0.8);
   backdrop-filter: blur(18px);
-  border-block-end: 1px solid rgba(17, 29, 47, 0.08);
+  border-block-end: 1px solid rgba(239, 243, 247, 0.08);
+  box-shadow: 0 10px 30px rgba(4, 8, 13, 0.18);
 }
 
 .brandLink {
@@ -14,22 +15,26 @@
 }
 
 .brandName {
-  font-family: var(--font-heading), serif;
+  color: #eff3f7;
+  font-family: var(--font-heading), sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
 }
 
 .brandStrapline {
   max-inline-size: 21rem;
+  color: rgba(239, 243, 247, 0.64);
 }
 
 .navLink {
   position: relative;
-  padding-block: 0.45rem;
-  color: var(--mantine-color-dimmed);
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  color: rgba(239, 243, 247, 0.68);
   font-weight: 500;
   transition:
+    background-color 140ms ease,
     color 140ms ease,
     transform 140ms ease;
 }
@@ -37,9 +42,9 @@
 .navLink::after {
   content: "";
   position: absolute;
-  inset-inline: 0;
-  inset-block-end: -0.15rem;
-  block-size: 2px;
+  inset-inline: 0.75rem;
+  inset-block-end: 0.2rem;
+  block-size: 1px;
   border-radius: 999px;
   background: var(--mantine-color-brand-5);
   transform: scaleX(0);
@@ -48,11 +53,13 @@
 }
 
 .navLink:hover {
-  color: var(--mantine-color-text);
+  background: rgba(239, 243, 247, 0.06);
+  color: #eff3f7;
 }
 
 .navLink[data-active="true"] {
-  color: var(--mantine-color-text);
+  background: rgba(239, 243, 247, 0.08);
+  color: #eff3f7;
 }
 
 .navLink[data-active="true"]::after {
@@ -61,15 +68,5 @@
 
 .drawerContent {
   background:
-    linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(245, 242, 235, 0.98));
-}
-
-[data-mantine-color-scheme="dark"] .headerRoot {
-  background: rgba(9, 17, 27, 0.78);
-  border-block-end-color: rgba(237, 242, 247, 0.08);
-}
-
-[data-mantine-color-scheme="dark"] .drawerContent {
-  background:
-    linear-gradient(180deg, rgba(9, 17, 27, 0.99), rgba(11, 22, 35, 0.99));
+    linear-gradient(180deg, rgba(9, 16, 25, 0.99), rgba(13, 20, 30, 0.99));
 }

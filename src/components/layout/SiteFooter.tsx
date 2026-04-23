@@ -14,6 +14,7 @@ import { footerNavigation } from "@/content/navigation";
 import { localizePath } from "@/i18n/routing";
 import type { Locale } from "@/i18n/config";
 import { siteConfig } from "@/lib/site";
+import classes from "@/components/layout/SiteFooter.module.css";
 
 interface SiteFooterProps {
   locale: Locale;
@@ -54,17 +55,17 @@ export function SiteFooter({
   };
 
   return (
-    <Box component="footer" pb="xl" pt={72}>
+    <Box className={classes.root} component="footer" pb="xl" pt={88}>
       <Container size="xl">
-        <Stack gap="xl">
-          <Divider opacity={0.3} />
+        <Stack gap="xl" pos="relative">
+          <Divider color="rgba(239, 243, 247, 0.08)" />
           <Grid gap="xl">
             <GridCol span={{ base: 12, md: 5 }}>
               <Stack gap="sm">
                 <Title order={3}>{brand.name}</Title>
-                <Text c="dimmed">{brand.strapline}</Text>
+                <Text c="rgba(239, 243, 247, 0.64)">{brand.strapline}</Text>
                 <Text maw={520}>{content.description}</Text>
-                <Text c="dimmed" size="sm">
+                <Text c="rgba(239, 243, 247, 0.56)" size="sm">
                   {content.note}
                 </Text>
               </Stack>
@@ -75,11 +76,12 @@ export function SiteFooter({
                 <Text fw={600}>{content.sitemapHeading}</Text>
                 {footerNavigation.map((item) => (
                   <Link
+                    className={classes.link}
                     href={localizePath(locale, item.href)}
                     key={item.key}
                     style={{ textDecoration: "none" }}
                   >
-                    <Text c="dimmed" component="span">
+                    <Text component="span">
                       {navigationLabels[item.key]}
                     </Text>
                   </Link>
@@ -90,13 +92,13 @@ export function SiteFooter({
             <GridCol span={{ base: 12, sm: 6, md: 4 }}>
               <Stack gap="sm">
                 <Text fw={600}>{content.reachOutHeading}</Text>
-                <Text c="dimmed" size="sm">
+                <Text c="rgba(239, 243, 247, 0.56)" size="sm">
                   {content.emailLabel}
                 </Text>
-                <a href={`mailto:${siteConfig.email}`}>
+                <a className={classes.link} href={`mailto:${siteConfig.email}`}>
                   {siteConfig.email}
                 </a>
-                <Text c="dimmed" mt="sm" size="sm">
+                <Text c="rgba(239, 243, 247, 0.56)" mt="sm" size="sm">
                   {content.locationLabel}
                 </Text>
                 <Text>{siteConfig.location}</Text>
@@ -104,8 +106,8 @@ export function SiteFooter({
             </GridCol>
           </Grid>
 
-          <Divider opacity={0.25} />
-          <Text c="dimmed" size="sm">
+          <Divider color="rgba(239, 243, 247, 0.08)" />
+          <Text c="rgba(239, 243, 247, 0.56)" size="sm">
             {new Date().getFullYear()} {brand.name}. {content.rights}
           </Text>
         </Stack>

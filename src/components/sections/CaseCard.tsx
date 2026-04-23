@@ -2,8 +2,11 @@ import { Card, Group, List, ListItem, Stack, Text, ThemeIcon } from "@mantine/co
 import { IconArrowRight } from "@tabler/icons-react";
 import type { TablerIcon } from "@tabler/icons-react";
 
+import classes from "@/components/sections/CaseCard.module.css";
+
 interface CaseCardProps {
   icon: TablerIcon;
+  sectionLabel: string;
   title: string;
   summary: string;
   context: string;
@@ -21,6 +24,7 @@ interface CaseCardProps {
 
 export function CaseCard({
   icon: Icon,
+  sectionLabel,
   title,
   summary,
   context,
@@ -31,55 +35,53 @@ export function CaseCard({
   compact = false,
 }: CaseCardProps) {
   return (
-    <Card
-      bg="var(--panel-surface)"
-      h="100%"
-      shadow="sm"
-      withBorder
-    >
+    <Card className={classes.card} h="100%" shadow="sm" withBorder>
       <Stack gap="md" h="100%">
         <Group justify="space-between" wrap="nowrap">
-          <ThemeIcon color="brand" radius="xl" size={42} variant="light">
-            <Icon size={20} />
-          </ThemeIcon>
+          <Stack gap={6}>
+            <Text className={classes.label}>{sectionLabel}</Text>
+            <ThemeIcon color="brand" radius="xl" size={42} variant="light">
+              <Icon size={20} />
+            </ThemeIcon>
+          </Stack>
           <ThemeIcon color="sand" radius="xl" size={34} variant="light">
             <IconArrowRight size={16} />
           </ThemeIcon>
         </Group>
 
         <Stack gap={6}>
-          <Text fw={600} size="xl">
+          <Text className={classes.title} fw={600} size="xl">
             {title}
           </Text>
           <Text c="dimmed">{summary}</Text>
         </Stack>
 
         {compact ? (
-            <List spacing="xs" size="sm">
-              <ListItem>{outcome}</ListItem>
-              <ListItem>{approach}</ListItem>
-            </List>
+          <List className={classes.compactList} spacing="xs" size="sm">
+            <ListItem>{outcome}</ListItem>
+            <ListItem>{approach}</ListItem>
+          </List>
         ) : (
           <Stack gap="sm">
-            <Text size="sm">
+            <Text className={classes.detailRow} size="sm">
               <Text component="span" fw={600}>
                 {labels.context}:
               </Text>{" "}
               {context}
             </Text>
-            <Text size="sm">
+            <Text className={classes.detailRow} size="sm">
               <Text component="span" fw={600}>
                 {labels.challenge}:
               </Text>{" "}
               {challenge}
             </Text>
-            <Text size="sm">
+            <Text className={classes.detailRow} size="sm">
               <Text component="span" fw={600}>
                 {labels.approach}:
               </Text>{" "}
               {approach}
             </Text>
-            <Text size="sm">
+            <Text className={classes.detailRow} size="sm">
               <Text component="span" fw={600}>
                 {labels.outcome}:
               </Text>{" "}

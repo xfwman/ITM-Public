@@ -1,9 +1,9 @@
 .heroCard {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(17, 29, 47, 0.08);
+  border: 1px solid rgba(239, 243, 247, 0.08);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 248, 238, 0.9));
+    linear-gradient(135deg, rgba(8, 14, 21, 0.99), rgba(17, 27, 38, 0.96));
 }
 
 .heroCard::before {
@@ -11,23 +11,63 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 0% 0%, rgba(29, 166, 154, 0.18), transparent 26%),
-    radial-gradient(circle at 100% 0%, rgba(204, 156, 86, 0.24), transparent 20%);
+    radial-gradient(circle at 0% 0%, rgba(112, 208, 42, 0.2), transparent 24%),
+    radial-gradient(circle at 100% 0%, rgba(196, 142, 75, 0.18), transparent 18%);
   pointer-events: none;
 }
 
 .heroPanel {
-  border: 1px solid rgba(17, 29, 47, 0.08);
-  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(239, 243, 247, 0.08);
+  background: rgba(239, 243, 247, 0.05);
 }
 
-[data-mantine-color-scheme="dark"] .heroCard {
-  border-color: rgba(237, 242, 247, 0.08);
-  background:
-    linear-gradient(180deg, rgba(17, 29, 47, 0.82), rgba(9, 17, 27, 0.88));
+.description {
+  color: rgba(239, 243, 247, 0.74);
 }
 
-[data-mantine-color-scheme="dark"] .heroPanel {
-  border-color: rgba(237, 242, 247, 0.08);
-  background: rgba(11, 22, 35, 0.76);
+.metricCard {
+  border: 1px solid rgba(239, 243, 247, 0.08);
+  background: rgba(239, 243, 247, 0.05);
+}
+
+.metricValue {
+  color: #ffffff;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+}
+
+.spotlightLink {
+  display: block;
+  text-decoration: none;
+}
+
+.spotlightCard {
+  border: 1px solid rgba(239, 243, 247, 0.08);
+  background: rgba(239, 243, 247, 0.04);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.spotlightCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(112, 208, 42, 0.36);
+  background: rgba(239, 243, 247, 0.07);
+}
+
+.spotlightLabel {
+  color: rgba(239, 243, 247, 0.5);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.spotlightTitle {
+  color: #ffffff;
+  font-family: var(--font-heading), sans-serif;
+  letter-spacing: -0.04em;
 }

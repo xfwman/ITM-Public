@@ -27,6 +27,7 @@ export default async function CasesPage({ params }: CasesPageProps) {
   const { locale, messages } = await getPageContext(params);
   const page = messages.pages.cases;
   const labels = messages.shared.labels;
+  const navigation = messages.shared.navigation;
 
   return (
     <>
@@ -67,6 +68,7 @@ export default async function CasesPage({ params }: CasesPageProps) {
                 key={caseItem.id}
                 labels={labels}
                 outcome={content.outcome}
+                sectionLabel={navigation.cases}
                 summary={content.summary}
                 title={content.title}
               />

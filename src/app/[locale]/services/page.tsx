@@ -27,6 +27,7 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
   const { locale, messages } = await getPageContext(params);
   const page = messages.pages.services;
   const labels = messages.shared.labels;
+  const navigation = messages.shared.navigation;
 
   return (
     <>
@@ -58,6 +59,7 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
                 key={service.id}
                 labels={labels}
                 outcomes={content.outcomes}
+                sectionLabel={navigation.services}
                 summary={content.summary}
                 title={content.title}
               />

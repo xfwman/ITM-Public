@@ -1,9 +1,9 @@
 .panel {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(17, 29, 47, 0.08);
+  border: 1px solid rgba(239, 243, 247, 0.08);
   background:
-    linear-gradient(135deg, rgba(17, 29, 47, 0.95), rgba(13, 83, 78, 0.92));
+    linear-gradient(135deg, rgba(8, 14, 21, 0.98), rgba(18, 30, 42, 0.95));
   color: white;
 }
 
@@ -12,7 +12,16 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.16), transparent 22%),
-    radial-gradient(circle at 12% 100%, rgba(204, 156, 86, 0.28), transparent 26%);
+    radial-gradient(circle at 82% 18%, rgba(112, 208, 42, 0.2), transparent 22%),
+    radial-gradient(circle at 12% 100%, rgba(196, 142, 75, 0.18), transparent 24%);
   pointer-events: none;
+}
+
+.panel::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 3px;
+  background: linear-gradient(90deg, rgba(112, 208, 42, 0.95), rgba(196, 142, 75, 0.7));
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 import "@mantine/core/styles.css";
-import { IBM_Plex_Sans, Merriweather } from "next/font/google";
+import { Plus_Jakarta_Sans, Sora } from "next/font/google";
 
 import "@/app/globals.css";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -12,16 +12,16 @@ import { getPageContext } from "@/i18n/server";
 import { siteConfig } from "@/lib/site";
 import { theme } from "@/theme";
 
-const bodyFont = IBM_Plex_Sans({
+const bodyFont = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-body",
   weight: ["400", "500", "600", "700"],
 });
 
-const headingFont = Merriweather({
+const headingFont = Sora({
   subsets: ["latin"],
   variable: "--font-heading",
-  weight: ["400", "700"],
+  weight: ["400", "600", "700"],
 });
 
 export const metadata: Metadata = {
