@@ -8,8 +8,8 @@ It is a multilingual marketing site built to present services, experience, and c
 - `Next.js` with the App Router
 - `TypeScript`
 - `Mantine` for UI primitives, theming, forms, and responsive composition
-- Locale-based routing with English and Danish message catalogs
-- Structured content modules for services and cases
+- Locale-based routing with English and Danish markdown content files
+- Headless content architecture with frontmatter markdown under root `content/`
 
 ## Run The Project
 
@@ -32,19 +32,35 @@ npm run build
 
 - Routes are locale-prefixed: `/en/...` and `/da/...`
 - A root proxy redirects `/` to the best locale based on cookie or browser language
-- All user-facing copy is externalized in:
-  - [src/messages/en.ts](C:/source/itm-public/src/messages/en.ts)
-  - [src/messages/da.ts](C:/source/itm-public/src/messages/da.ts)
-- Shared locale helpers live in:
+- All user-facing copy is externalized in markdown files with locale suffixes such as:
+  - [content/shared/site.en.md](C:/source/itm-public/content/shared/site.en.md)
+  - [content/shared/site.da.md](C:/source/itm-public/content/shared/site.da.md)
+  - [content/pages/home/index.en.md](C:/source/itm-public/content/pages/home/index.en.md)
+  - [content/pages/home/index.da.md](C:/source/itm-public/content/pages/home/index.da.md)
+  - [content/catalog/services/index.en.md](C:/source/itm-public/content/catalog/services/index.en.md)
+  - [content/catalog/services/index.da.md](C:/source/itm-public/content/catalog/services/index.da.md)
+- Shared locale helpers and the markdown loader live in:
   - [src/i18n/config.ts](C:/source/itm-public/src/i18n/config.ts)
   - [src/i18n/dictionaries.ts](C:/source/itm-public/src/i18n/dictionaries.ts)
   - [src/i18n/routing.ts](C:/source/itm-public/src/i18n/routing.ts)
+  - [src/lib/content-loader.ts](C:/source/itm-public/src/lib/content-loader.ts)
+
+## Headless Content Structure
+
+Content is organized hierarchically under the root [content](C:/source/itm-public/content) directory:
+
+- [content/shared](C:/source/itm-public/content/shared) for brand, navigation, footer, theme, and shared labels
+- [content/pages](C:/source/itm-public/content/pages) for page-specific metadata and content blocks
+- [content/catalog](C:/source/itm-public/content/catalog) for structured collections like services, cases, audiences, and engagement models
+
+Every localized file uses a locale suffix, for example `site.en.md`, `site.da.md`, `index.en.md`, or `index.da.md`.
 
 ## Content Updates
 
-- Update service definitions in [src/content/services.ts](C:/source/itm-public/src/content/services.ts)
-- Update case definitions in [src/content/cases.ts](C:/source/itm-public/src/content/cases.ts)
-- Update visible text in the locale files under [src/messages](C:/source/itm-public/src/messages)
+- Update shared site copy in [content/shared](C:/source/itm-public/content/shared)
+- Update page copy and metadata in [content/pages](C:/source/itm-public/content/pages)
+- Update structured services, cases, audiences, and engagement models in [content/catalog](C:/source/itm-public/content/catalog)
+- Update structural icon/route definitions in [src/data](C:/source/itm-public/src/data)
 - Update shared site details such as email, URL, and location in [src/lib/site.ts](C:/source/itm-public/src/lib/site.ts)
 
 ## Contact Form

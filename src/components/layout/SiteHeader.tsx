@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -16,7 +17,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
-import { primaryNavigation } from "@/content/navigation";
+import { primaryNavigation } from "@/data/navigation";
 import { replaceLocaleInPathname, stripLocaleFromPathname } from "@/i18n/routing";
 import type { Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
@@ -61,6 +62,8 @@ export function SiteHeader({
 }: SiteHeaderProps) {
   const pathname = usePathname();
   const [opened, { close, toggle }] = useDisclosure(false);
+  const navTabsRef = useRef<HTMLDivElement | null>(null);
+  const [uniformTabWidth, setUniformTabWidth] = useState<number | null>(null);
   const currentPath: string = stripLocaleFromPathname(pathname || `/${locale}`);
 
   const navigationLabels = {
@@ -69,6 +72,64 @@ export function SiteHeader({
     cases: navigation.cases,
     contact: navigation.contact,
   };
+
+  useEffect(() => {
+    function measureTabs() {
+      const tabs = navTabsRef.current;
+
+      if (!tabs || window.matchMedia("(max-width: 48em)").matches) {
+        setUniformTabWidth(null);
+        return;
+      }
+
+      const labels = Array.from(
+        tabs.querySelectorAll<HTMLElement>("[data-nav-label='true']"),
+      );
+      const sampleLink = tabs.querySelector<HTMLElement>("[data-tab-link='true']");
+
+      if (!labels.length || !sampleLink) {
+        setUniformTabWidth(null);
+        return;
+      }
+
+      const styles = window.getComputedStyle(sampleLink);
+      const horizontalSpacing =
+        Number.parseFloat(styles.paddingInlineStart) +
+        Number.parseFloat(styles.paddingInlineEnd) +
+        Number.parseFloat(styles.borderInlineStartWidth) +
+        Number.parseFloat(styles.borderInlineEndWidth);
+
+      const widestLabel = labels.reduce((maxWidth, label) => {
+        return Math.max(maxWidth, label.getBoundingClientRect().width);
+      }, 0);
+
+      setUniformTabWidth(Math.ceil(widestLabel + horizontalSpacing));
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      measureTabs();
+    });
+
+    if (navTabsRef.current) {
+      resizeObserver.observe(navTabsRef.current);
+    }
+
+    void document.fonts?.ready.then(() => {
+      measureTabs();
+    });
+
+    measureTabs();
+    window.addEventListener("resize", measureTabs, { passive: true });
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", measureTabs);
+    };
+  }, [locale, pathname]);
+
+  const navTabsStyle = uniformTabWidth
+    ? ({ "--uniform-tab-width": `${uniformTabWidth}px` } as CSSProperties)
+    : undefined;
 
   return (
     <Box className={classes.headerRoot}>
@@ -91,17 +152,27 @@ export function SiteHeader({
             </Text>
           </Anchor>
 
-          <Group gap="lg" visibleFrom="md" wrap="nowrap">
+          <Group
+            className={classes.navTabs}
+            gap="xs"
+            ref={navTabsRef}
+            style={navTabsStyle}
+            visibleFrom="md"
+            wrap="nowrap"
+          >
             {primaryNavigation.map((item) => (
               <Anchor
                 className={classes.navLink}
                 component={Link}
                 data-active={currentPath === item.href || undefined}
+                data-tab-link="true"
                 href={`/${locale}${item.href}`}
                 key={item.key}
                 underline="never"
               >
-                {navigationLabels[item.key]}
+                <span className={classes.navLabel} data-nav-label="true">
+                  {navigationLabels[item.key]}
+                </span>
               </Anchor>
             ))}
           </Group>
@@ -164,7 +235,7 @@ export function SiteHeader({
             onClick={close}
             underline="never"
           >
-            {navigation.home}
+            <span className={classes.navLabel}>{navigation.home}</span>
           </Anchor>
 
           {primaryNavigation.map((item) => (
@@ -177,7 +248,7 @@ export function SiteHeader({
               onClick={close}
               underline="never"
             >
-              {navigationLabels[item.key]}
+              <span className={classes.navLabel}>{navigationLabels[item.key]}</span>
             </Anchor>
           ))}
 

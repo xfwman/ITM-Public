@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { sitemapRoutes } from "@/content/navigation";
+import { sitemapRoutes } from "@/data/navigation";
 import { locales } from "@/i18n/config";
 import { localizePath } from "@/i18n/routing";
 import { siteConfig } from "@/lib/site";

@@ -5,7 +5,7 @@ import { CaseCard } from "@/components/sections/CaseCard";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { PageIntro } from "@/components/sections/PageIntro";
 import { SectionShell } from "@/components/shared/SectionShell";
-import { caseDefinitions } from "@/content/cases";
+import { caseDefinitions } from "@/data/cases";
 import { getPageContext } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { createPageMetadata } from "@/lib/metadata";

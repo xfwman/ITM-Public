@@ -15,11 +15,11 @@ Its purpose is to communicate services, credibility, and contact opportunities t
 
 ## Architecture Rules
 
-- Keep all visible user-facing copy externalized in locale message files
+- Keep all visible user-facing copy externalized in root-level markdown files under `content/`
 - Reuse shared components before introducing new visual variants
 - Keep page sections composable and content-driven
 - Preserve accessibility, keyboard usability, and responsive behavior
-- Keep services and cases structured in dedicated content modules
+- Keep services, cases, shared site copy, and page content structured in hierarchical markdown modules with locale suffixes like `*.en.md`
 
 ## Design System Guidance
 
@@ -38,6 +38,9 @@ Its purpose is to communicate services, credibility, and contact opportunities t
 
 ## Content Rules
 
+- The root `content/` directory is the headless source of truth for editorial content
+- Use frontmatter markdown files with locale suffixes like `index.en.md` and `index.da.md`
+- Organize content hierarchically in subdirectories such as `content/pages/...`, `content/catalog/...`, and `content/shared/...`
 - Services and cases must stay structured and reusable
 - English and Danish translations must stay synchronized
 - Placeholder content must be clearly recognizable and easy to replace

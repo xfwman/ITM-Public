@@ -5,7 +5,7 @@ import { CtaSection } from "@/components/sections/CtaSection";
 import { PageIntro } from "@/components/sections/PageIntro";
 import { ServiceCard } from "@/components/sections/ServiceCard";
 import { SectionShell } from "@/components/shared/SectionShell";
-import { serviceDefinitions } from "@/content/services";
+import { serviceDefinitions } from "@/data/services";
 import { getPageContext } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { createPageMetadata } from "@/lib/metadata";

@@ -10,7 +10,7 @@ import {
   Title,
 } from "@mantine/core";
 
-import { footerNavigation } from "@/content/navigation";
+import { footerNavigation } from "@/data/navigation";
 import { localizePath } from "@/i18n/routing";
 import type { Locale } from "@/i18n/config";
 import { siteConfig } from "@/lib/site";

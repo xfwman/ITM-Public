@@ -2,10 +2,12 @@
   position: sticky;
   inset-block-start: 0;
   z-index: 40;
+  isolation: isolate;
   background: var(--header-bg);
   backdrop-filter: blur(14px);
-  border-block-end: var(--box-edge-width) solid var(--line-soft);
-  box-shadow: 0 14px 34px rgba(2, 8, 16, 0.22);
+  border-block-end: 4px solid var(--line-soft);
+  overflow: visible;
+  box-shadow: none;
 }
 
 .brandLink {
@@ -27,40 +29,54 @@
   color: rgba(239, 243, 247, 0.64);
 }
 
+.navTabs {
+  flex: 1 1 auto;
+  align-self: stretch;
+  align-items: flex-end;
+  justify-content: center;
+  min-inline-size: 0;
+}
+
 .navLink {
+  display: inline-flex;
+  flex: 0 0 var(--uniform-tab-width, auto);
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--uniform-tab-width, auto);
+  min-block-size: 2.7rem;
+  margin-block-end: calc(var(--box-edge-width) * -1);
+  padding: 0.62rem 1rem calc(0.58rem + var(--box-edge-width));
+  border: var(--box-edge-width) solid transparent;
+  border-block-end: 0;
+  border-radius: 12px 12px 0 0;
+  background: transparent;
   position: relative;
-  padding: 0.35rem 0;
+  z-index: 0;
   color: rgba(239, 243, 247, 0.72);
   font-weight: 550;
   transition:
     color 140ms ease,
-    opacity 140ms ease;
+    background-color 140ms ease,
+    border-color 140ms ease;
 }
 
-.navLink::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: -0.7rem;
-  block-size: 2px;
-  border-radius: 999px;
-  background:
-    linear-gradient(90deg, rgba(243, 179, 119, 0.94), rgba(229, 130, 48, 0.92));
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 140ms ease;
+.navLabel {
+  display: block;
+  white-space: nowrap;
 }
 
 .navLink:hover {
   color: #eff3f7;
+  background: rgba(1, 9, 40, 0.26);
 }
 
 .navLink[data-active="true"] {
-  color: #eff3f7;
-}
-
-.navLink[data-active="true"]::after {
-  transform: scaleX(1);
+  color: var(--header-text);
+  background-color: var(--box-edge-color);
+  background-image: none;
+  border-color: var(--line-soft);
+  z-index: 1;
+  box-shadow: none;
 }
 
 .utilityControl {
@@ -126,8 +142,29 @@
 }
 
 @media (max-width: 48em) {
+  .navTabs {
+    flex: 0 1 auto;
+    align-self: auto;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
   .navLink {
+    display: block;
+    flex: initial;
+    inline-size: auto;
+    min-block-size: 0;
+    margin-block-end: 0;
     padding: 0.25rem 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     font-size: 1.05rem;
+  }
+
+  .navLink[data-active="true"] {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
   }
 }
