@@ -36,6 +36,7 @@ export default async function RootLayout({
     <html
       {...mantineHtmlProps}
       className={`${bodyFont.variable} ${headingFont.variable}`}
+      data-scroll-behavior="smooth"
       dir="ltr"
       lang={locale ?? "en"}
     >

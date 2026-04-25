@@ -45,6 +45,14 @@ export class BugField {
         }
     }
     /**
+     * @param {Float32Array} regions
+     */
+    set_cover_regions(regions) {
+        const ptr0 = passArrayF32ToWasm0(regions, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.bugfield_set_cover_regions(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
      * @param {boolean} dark_mode
      */
     set_dark_mode(dark_mode) {
@@ -65,6 +73,15 @@ export class BugField {
     set_viewport(viewport_x, viewport_y) {
         wasm.bugfield_set_viewport(this.__wbg_ptr, viewport_x, viewport_y);
     }
+    /**
+     * @param {number} page_x
+     * @param {number} page_y
+     * @returns {boolean}
+     */
+    splat_at(page_x, page_y) {
+        const ret = wasm.bugfield_splat_at(this.__wbg_ptr, page_x, page_y);
+        return ret !== 0;
+    }
 }
 if (Symbol.dispose) BugField.prototype[Symbol.dispose] = BugField.prototype.free;
 function __wbg_get_imports() {
@@ -78,6 +95,12 @@ function __wbg_get_imports() {
         },
         __wbg_clearRect_5fb1d6b44e6b6738: function(arg0, arg1, arg2, arg3, arg4) {
             arg0.clearRect(arg1, arg2, arg3, arg4);
+        },
+        __wbg_clip_650afbf402c47658: function(arg0) {
+            arg0.clip();
+        },
+        __wbg_closePath_d9cf40637e9c89c2: function(arg0) {
+            arg0.closePath();
         },
         __wbg_ellipse_0303410b3d05bb97: function() { return handleError(function (arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
             arg0.ellipse(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -119,6 +142,9 @@ function __wbg_get_imports() {
         }, arguments); },
         __wbg_set_fillStyle_6816843dfcfe7a30: function(arg0, arg1) {
             arg0.fillStyle = arg1;
+        },
+        __wbg_set_globalAlpha_1660b0603161d11b: function(arg0, arg1) {
+            arg0.globalAlpha = arg1;
         },
         __wbg_set_height_be9b2b920bd68401: function(arg0, arg1) {
             arg0.height = arg1 >>> 0;

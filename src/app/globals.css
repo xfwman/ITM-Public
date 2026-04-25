@@ -19,11 +19,11 @@ body {
   --box-edge-width: 2px;
   --body-tab-fill: #ff8f1a;
   --body-tab-text: #10203a;
-  --page-ambient-base: var(--body-tab-fill);
+  --page-ambient-base: #ffffff;
   --page-ambient-overlay: none;
-  --page-ambient-tab-background: var(--body-tab-fill);
-  --page-bg: var(--body-tab-fill);
-  --page-bg-soft: var(--body-tab-fill);
+  --page-ambient-tab-background: #ffffff;
+  --page-bg: #ffffff;
+  --page-bg-soft: #f7f7f7;
   --panel-surface: rgba(255, 250, 244, 0.88);
   --panel-surface-strong: rgba(255, 253, 248, 0.96);
   --panel-dark: #0a1d34;
@@ -66,11 +66,11 @@ body::after {
   --box-edge-color: RoyalBlue;
   --body-tab-fill: #a43d00;
   --body-tab-text: #fff3e6;
-  --page-ambient-base: var(--body-tab-fill);
+  --page-ambient-base: #ffffff;
   --page-ambient-overlay: none;
-  --page-ambient-tab-background: var(--body-tab-fill);
-  --page-bg: var(--body-tab-fill);
-  --page-bg-soft: var(--body-tab-fill);
+  --page-ambient-tab-background: #ffffff;
+  --page-bg: #ffffff;
+  --page-bg-soft: #f4f4f4;
   --panel-surface: rgba(22, 18, 18, 0.82);
   --panel-surface-strong: rgba(31, 24, 22, 0.92);
   --panel-dark: #08172b;
@@ -85,7 +85,7 @@ body::after {
     0 18px 38px rgba(0, 0, 0, 0.34),
     0 5px 16px rgba(0, 0, 0, 0.24);
   background-color: var(--page-bg);
-  color: #eff3f7;
+  color: #141e2a;
 }
 
 [data-mantine-color-scheme="dark"] body::before {

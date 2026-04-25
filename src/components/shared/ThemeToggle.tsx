@@ -60,6 +60,7 @@ export function ThemeToggle({ content, className }: ThemeToggleProps) {
         overlayProps={{
           backgroundOpacity: 0.55,
           blur: 10,
+          className: "ambient-cover-barrier",
           color: "#02114b",
         }}
         title={content.toggle}

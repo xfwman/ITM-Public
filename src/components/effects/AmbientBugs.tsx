@@ -13,7 +13,9 @@ interface BugFieldInstance {
     pageHeight: number,
     dpr: number,
   ): void;
+  set_cover_regions(regions: Float32Array): void;
   set_dark_mode(darkMode: boolean): void;
+  splat_at(pageX: number, pageY: number): boolean;
   set_viewport(scrollX: number, scrollY: number): void;
   set_obstacles(rects: Float32Array): void;
 }
@@ -25,24 +27,150 @@ interface AmbientBugsModule {
   BugField: new (canvas: HTMLCanvasElement, seed: number) => BugFieldInstance;
 }
 
-const OBSTACLE_SELECTOR = "main .mantine-Paper-root, main .mantine-Card-root";
+const enum CoverRegionKind {
+  Shelter = 0,
+  Barrier = 1,
+  Canopy = 2,
+}
 
-function collectObstacleRects(): number[] {
-  const rects: number[] = [];
+interface CoverRegionSource {
+  selector: string;
+  kind: CoverRegionKind;
+  priority: number;
+  minimumWidth?: number;
+  minimumHeight?: number;
+}
+
+const COVER_REGION_SOURCES: readonly CoverRegionSource[] = [
+  {
+    selector: "[data-ambient-cover='barrier'], .ambient-cover-barrier",
+    kind: CoverRegionKind.Barrier,
+    priority: 90,
+  },
+  {
+    selector: "[data-ambient-cover='shelter']",
+    kind: CoverRegionKind.Shelter,
+    priority: 80,
+  },
+  {
+    selector: "[data-ambient-cover='canopy']",
+    kind: CoverRegionKind.Canopy,
+    priority: 70,
+  },
+  {
+    selector: "[data-modal-content='true'], .mantine-Drawer-content, [data-menu-dropdown='true']",
+    kind: CoverRegionKind.Shelter,
+    priority: 60,
+  },
+  {
+    selector: "main .mantine-Paper-root, main .mantine-Card-root",
+    kind: CoverRegionKind.Shelter,
+    priority: 10,
+  },
+];
+
+function isRenderableCoverRegion(
+  element: HTMLElement,
+  rect: DOMRect,
+  minimumWidth: number,
+  minimumHeight: number,
+) {
+  if (rect.width < minimumWidth || rect.height < minimumHeight) {
+    return false;
+  }
+
+  const styles = window.getComputedStyle(element);
+  return styles.display !== "none" && styles.visibility !== "hidden" && styles.opacity !== "0";
+}
+
+function collectCoverRegionEntries() {
+  const entries = new Map<
+    HTMLElement,
+    {
+      source: CoverRegionSource;
+    }
+  >();
+
+  for (const source of COVER_REGION_SOURCES) {
+    for (const element of document.querySelectorAll<HTMLElement>(source.selector)) {
+      const existing = entries.get(element);
+      if (!existing || source.priority >= existing.source.priority) {
+        entries.set(element, { source });
+      }
+    }
+  }
+
+  return entries;
+}
+
+function collectCoverRegions(): number[] {
+  const regions: number[] = [];
   const pageX = window.scrollX;
   const pageY = window.scrollY;
 
-  for (const element of document.querySelectorAll<HTMLElement>(OBSTACLE_SELECTOR)) {
+  for (const [element, { source }] of collectCoverRegionEntries()) {
     const rect = element.getBoundingClientRect();
 
-    if (rect.width < 48 || rect.height < 32) {
+    if (
+      !isRenderableCoverRegion(
+        element,
+        rect,
+        source.minimumWidth ?? 48,
+        source.minimumHeight ?? 32,
+      )
+    ) {
       continue;
     }
 
-    rects.push(rect.left + pageX, rect.top + pageY, rect.width, rect.height);
+    regions.push(
+      source.kind,
+      rect.left + pageX,
+      rect.top + pageY,
+      rect.width,
+      rect.height,
+    );
   }
 
-  return rects;
+  return regions;
+}
+
+function pointIsCovered(pageX: number, pageY: number, regions: ArrayLike<number>) {
+  for (let index = 0; index <= regions.length - 5; index += 5) {
+    const x = regions[index + 1];
+    const y = regions[index + 2];
+    const width = regions[index + 3];
+    const height = regions[index + 4];
+
+    if (pageX >= x && pageX <= x + width && pageY >= y && pageY <= y + height) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isInteractiveTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  return Boolean(
+    target.closest(
+      [
+        "a",
+        "button",
+        "input",
+        "select",
+        "textarea",
+        "label",
+        "summary",
+        "[role='button']",
+        "[role='link']",
+        "[role='menuitem']",
+        "[data-ambient-cover]",
+      ].join(", "),
+    ),
+  );
 }
 
 function getPageMetrics() {
@@ -86,9 +214,10 @@ export function AmbientBugs() {
     let cancelled = false;
     let frameId = 0;
     let viewportDirty = true;
-    let obstacleDirty = true;
+    let coverDirty = true;
     let boundsDirty = true;
     let scene: BugFieldInstance | null = null;
+    let coverRegions = new Float32Array();
     let resizeObserver: ResizeObserver | null = null;
     let mutationObserver: MutationObserver | null = null;
 
@@ -124,9 +253,10 @@ export function AmbientBugs() {
       viewportDirty = false;
     }
 
-    function syncObstacles() {
-      scene?.set_obstacles(new Float32Array(collectObstacleRects()));
-      obstacleDirty = false;
+    function syncCoverWorld() {
+      coverRegions = new Float32Array(collectCoverRegions());
+      scene?.set_cover_regions(coverRegions);
+      coverDirty = false;
     }
 
     async function start() {
@@ -147,7 +277,7 @@ export function AmbientBugs() {
         syncColorScheme();
         syncBounds();
         syncViewport();
-        syncObstacles();
+        syncCoverWorld();
 
         const step = (timestamp: number) => {
           if (cancelled || !scene) {
@@ -162,8 +292,8 @@ export function AmbientBugs() {
             syncViewport();
           }
 
-          if (obstacleDirty) {
-            syncObstacles();
+          if (coverDirty) {
+            syncCoverWorld();
           }
 
           scene.frame(timestamp);
@@ -178,37 +308,71 @@ export function AmbientBugs() {
 
     const handleResize = () => {
       boundsDirty = true;
-      obstacleDirty = true;
+      coverDirty = true;
     };
 
     const handleScroll = () => {
       viewportDirty = true;
     };
 
+    const handleWorldClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || !scene) {
+        return;
+      }
+
+      if (isInteractiveTarget(event.target)) {
+        return;
+      }
+
+      if (boundsDirty) {
+        syncBounds();
+      }
+
+      if (viewportDirty) {
+        syncViewport();
+      }
+
+      if (coverDirty) {
+        syncCoverWorld();
+      }
+
+      const pageX = event.clientX + window.scrollX;
+      const pageY = event.clientY + window.scrollY;
+
+      if (pointIsCovered(pageX, pageY, coverRegions)) {
+        return;
+      }
+
+      scene.splat_at(pageX, pageY);
+    };
+
     window.addEventListener("resize", handleResize, { passive: true });
     window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("click", handleWorldClick, true);
 
     resizeObserver = new ResizeObserver(() => {
       boundsDirty = true;
       viewportDirty = true;
-      obstacleDirty = true;
+      coverDirty = true;
     });
 
     resizeObserver.observe(document.documentElement);
     resizeObserver.observe(document.body);
 
-    for (const element of document.querySelectorAll<HTMLElement>(OBSTACLE_SELECTOR)) {
+    for (const element of collectCoverRegionEntries().keys()) {
       resizeObserver.observe(element);
     }
 
     mutationObserver = new MutationObserver(() => {
       boundsDirty = true;
       viewportDirty = true;
-      obstacleDirty = true;
+      coverDirty = true;
       syncColorScheme();
 
       resizeObserver?.disconnect();
-      for (const element of document.querySelectorAll<HTMLElement>(OBSTACLE_SELECTOR)) {
+      resizeObserver?.observe(document.documentElement);
+      resizeObserver?.observe(document.body);
+      for (const element of collectCoverRegionEntries().keys()) {
         resizeObserver?.observe(element);
       }
     });
@@ -229,6 +393,7 @@ export function AmbientBugs() {
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("click", handleWorldClick, true);
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
     };

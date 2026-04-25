@@ -47,7 +47,7 @@ export function LanguageSwitcher({
         </Button>
       </Menu.Target>
 
-      <Menu.Dropdown className={dropdownClassName}>
+      <Menu.Dropdown className={dropdownClassName} data-ambient-cover="shelter">
         <Menu.Label>{content.label}</Menu.Label>
         {(["en", "da"] as const).map((option) => (
           <Menu.Item

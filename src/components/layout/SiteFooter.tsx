@@ -55,7 +55,13 @@ export function SiteFooter({
   };
 
   return (
-    <Box className={classes.root} component="footer" pb="xl" pt={88}>
+    <Box
+      className={classes.root}
+      component="footer"
+      data-ambient-cover="shelter"
+      pb="xl"
+      pt={88}
+    >
       <Container size="xl">
         <Stack gap="xl" pos="relative">
           <Divider color="rgba(239, 243, 247, 0.08)" />

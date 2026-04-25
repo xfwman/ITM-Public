@@ -132,7 +132,7 @@ export function SiteHeader({
     : undefined;
 
   return (
-    <Box className={classes.headerRoot}>
+    <Box className={classes.headerRoot} data-ambient-cover="shelter">
       <Container size="xl">
         <Group h={84} justify="space-between" wrap="nowrap">
           <Anchor
@@ -219,6 +219,7 @@ export function SiteHeader({
         overlayProps={{
           backgroundOpacity: 0.55,
           blur: 6,
+          className: "ambient-cover-barrier",
           color: "#02114b",
         }}
         opened={opened}
