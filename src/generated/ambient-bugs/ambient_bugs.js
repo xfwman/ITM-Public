@@ -32,6 +32,21 @@ export class BugField {
         return this;
     }
     /**
+     * @returns {string}
+     */
+    object_counts_json() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.bugfield_object_counts_json(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * @param {number} viewport_width
      * @param {number} viewport_height
      * @param {number} page_width
@@ -57,6 +72,14 @@ export class BugField {
      */
     set_dark_mode(dark_mode) {
         wasm.bugfield_set_dark_mode(this.__wbg_ptr, dark_mode);
+    }
+    /**
+     * @param {Float32Array} targets
+     */
+    set_object_targets(targets) {
+        const ptr0 = passArrayF32ToWasm0(targets, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.bugfield_set_object_targets(this.__wbg_ptr, ptr0, len0);
     }
     /**
      * @param {Float32Array} rects

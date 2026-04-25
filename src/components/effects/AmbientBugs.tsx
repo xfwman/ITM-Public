@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import classes from "@/components/effects/AmbientBugs.module.css";
+import {
+  ambientObjectCountsToFloat32Array,
+  getAmbientObjectCounts,
+  subscribeAmbientObjectCounts,
+} from "@/components/effects/ambientSettings";
 
 interface BugFieldInstance {
   frame(timestamp: number): void;
@@ -15,6 +21,8 @@ interface BugFieldInstance {
   ): void;
   set_cover_regions(regions: Float32Array): void;
   set_dark_mode(darkMode: boolean): void;
+  set_object_targets(targets: Float32Array): void;
+  object_counts_json(): string;
   splat_at(pageX: number, pageY: number): boolean;
   set_viewport(scrollX: number, scrollY: number): void;
   set_obstacles(rects: Float32Array): void;
@@ -25,6 +33,16 @@ interface AmbientBugsModule {
     module_or_path?: string;
   }): Promise<unknown>;
   BugField: new (canvas: HTMLCanvasElement, seed: number) => BugFieldInstance;
+}
+
+interface ObjectCountMetric {
+  name: string;
+  count: number;
+}
+
+interface DebugMetrics {
+  fps: number;
+  objects: ObjectCountMetric[];
 }
 
 const enum CoverRegionKind {
@@ -173,6 +191,41 @@ function isInteractiveTarget(target: EventTarget | null) {
   );
 }
 
+function parseObjectCountsJson(json: string): ObjectCountMetric[] {
+  try {
+    const parsed: unknown = JSON.parse(json);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.flatMap((entry) => {
+      if (
+        typeof entry !== "object" ||
+        entry === null ||
+        !("name" in entry) ||
+        !("count" in entry)
+      ) {
+        return [];
+      }
+
+      const { name, count } = entry;
+      if (typeof name !== "string" || typeof count !== "number" || !Number.isFinite(count)) {
+        return [];
+      }
+
+      return [
+        {
+          name,
+          count,
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
+}
+
 function getPageMetrics() {
   const root = document.documentElement;
   const body = document.body;
@@ -205,11 +258,20 @@ function loadAmbientBugsModule() {
 
 export function AmbientBugs() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [debugPortalReady, setDebugPortalReady] = useState(false);
+  const [debugMetrics, setDebugMetrics] = useState<DebugMetrics>({
+    fps: 0,
+    objects: [],
+  });
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return undefined;
     }
+
+    const debugPortalFrame = window.requestAnimationFrame(() => {
+      setDebugPortalReady(true);
+    });
 
     let cancelled = false;
     let frameId = 0;
@@ -218,13 +280,20 @@ export function AmbientBugs() {
     let boundsDirty = true;
     let scene: BugFieldInstance | null = null;
     let coverRegions = new Float32Array();
+    let fpsFrameCount = 0;
+    let fpsSampleStart = 0;
     let resizeObserver: ResizeObserver | null = null;
     let mutationObserver: MutationObserver | null = null;
 
     const canvas = canvasRef.current;
     if (!canvas) {
+      window.cancelAnimationFrame(debugPortalFrame);
       return undefined;
     }
+
+    const unsubscribeAmbientCounts = subscribeAmbientObjectCounts((counts) => {
+      syncObjectTargets(counts);
+    });
 
     function syncColorScheme() {
       scene?.set_dark_mode(
@@ -259,6 +328,41 @@ export function AmbientBugs() {
       coverDirty = false;
     }
 
+    function syncObjectTargets(counts = getAmbientObjectCounts()) {
+      scene?.set_object_targets(ambientObjectCountsToFloat32Array(counts));
+    }
+
+    function syncDebugMetrics(timestamp: number) {
+      if (!scene) {
+        return;
+      }
+
+      if (fpsSampleStart === 0) {
+        fpsSampleStart = timestamp;
+      }
+
+      fpsFrameCount += 1;
+      const elapsed = timestamp - fpsSampleStart;
+
+      if (elapsed < 500) {
+        return;
+      }
+
+      let objects: ObjectCountMetric[] = [];
+      try {
+        objects = parseObjectCountsJson(scene.object_counts_json());
+      } catch {
+        objects = [];
+      }
+
+      setDebugMetrics({
+        fps: (fpsFrameCount * 1000) / elapsed,
+        objects,
+      });
+      fpsFrameCount = 0;
+      fpsSampleStart = timestamp;
+    }
+
     async function start() {
       try {
         const bugsModule = await loadAmbientBugsModule();
@@ -278,6 +382,7 @@ export function AmbientBugs() {
         syncBounds();
         syncViewport();
         syncCoverWorld();
+        syncObjectTargets();
 
         const step = (timestamp: number) => {
           if (cancelled || !scene) {
@@ -297,6 +402,7 @@ export function AmbientBugs() {
           }
 
           scene.frame(timestamp);
+          syncDebugMetrics(timestamp);
           frameId = window.requestAnimationFrame(step);
         };
 
@@ -394,10 +500,44 @@ export function AmbientBugs() {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("click", handleWorldClick, true);
+      window.cancelAnimationFrame(debugPortalFrame);
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
+      unsubscribeAmbientCounts();
     };
   }, []);
 
-  return <canvas aria-hidden="true" className={classes.canvas} ref={canvasRef} />;
+  const debugOverlay = (
+    <aside aria-hidden="true" className={classes.debugOverlay}>
+      <div className={classes.debugHeader}>Ambient debug</div>
+      <div className={classes.debugFrameRate}>
+        <span>Frame rate</span>
+        <strong>{debugMetrics.fps.toFixed(1)}</strong>
+        <em>fps</em>
+      </div>
+      <div className={classes.debugSubhead}>Objects</div>
+      <dl className={classes.debugObjectList}>
+        {debugMetrics.objects.length > 0 ? (
+          debugMetrics.objects.map((object) => (
+            <div className={classes.debugObjectRow} key={object.name}>
+              <dt>{object.name}</dt>
+              <dd>{object.count}</dd>
+            </div>
+          ))
+        ) : (
+          <div className={classes.debugObjectRow}>
+            <dt>None</dt>
+            <dd>0</dd>
+          </div>
+        )}
+      </dl>
+    </aside>
+  );
+
+  return (
+    <>
+      <canvas aria-hidden="true" className={classes.canvas} ref={canvasRef} />
+      {debugPortalReady ? createPortal(debugOverlay, document.body) : null}
+    </>
+  );
 }

@@ -7,3 +7,112 @@
   pointer-events: none;
   opacity: 0.96;
 }
+
+.debugOverlay {
+  position: fixed;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  z-index: 2147483647;
+  min-inline-size: 220px;
+  max-inline-size: min(320px, calc(100vw - 16px));
+  padding: 12px;
+  border: 1px solid rgba(20, 24, 32, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #1a1b1e;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.debugHeader {
+  margin-block-end: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.debugObjectRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.debugFrameRate {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 0 10px;
+  padding-block-end: 8px;
+  border-block-end: 1px solid rgba(20, 24, 32, 0.1);
+}
+
+.debugFrameRate span,
+.debugObjectRow dt {
+  color: rgba(26, 27, 30, 0.72);
+}
+
+.debugFrameRate strong {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.debugFrameRate em {
+  grid-column: 2;
+  color: rgba(26, 27, 30, 0.64);
+  font-style: normal;
+  font-weight: 700;
+  text-align: end;
+  text-transform: uppercase;
+}
+
+.debugObjectRow dd {
+  margin: 0;
+  color: inherit;
+  font-weight: 700;
+}
+
+.debugSubhead {
+  margin-block: 8px 4px;
+  color: rgba(26, 27, 30, 0.64);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.debugObjectList {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+:global([data-mantine-color-scheme="dark"]) .debugOverlay {
+  border-color: rgba(230, 235, 245, 0.18);
+  background: rgba(16, 20, 28, 0.86);
+  color: #f1f3f5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34);
+}
+
+:global([data-mantine-color-scheme="dark"]) .debugFrameRate {
+  border-block-end-color: rgba(230, 235, 245, 0.14);
+}
+
+:global([data-mantine-color-scheme="dark"]) .debugFrameRate span,
+:global([data-mantine-color-scheme="dark"]) .debugObjectRow dt {
+  color: rgba(241, 243, 245, 0.72);
+}
+
+:global([data-mantine-color-scheme="dark"]) .debugFrameRate em {
+  color: rgba(241, 243, 245, 0.62);
+}
+
+:global([data-mantine-color-scheme="dark"]) .debugSubhead {
+  color: rgba(241, 243, 245, 0.62);
+}

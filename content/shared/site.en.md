@@ -25,8 +25,16 @@ language:
     da: Dansk
 theme:
   toggle: Settings
-  light: Light theme
-  dark: Dark theme
+  count: Count
+  objects:
+    dandelion: Dandelion
+    strawberryPlant: Strawberry plant
+    grassClump: Grass
+    aphid: Aphid
+    leafBeetle: Leaf beetle
+    groundBeetle: Ground beetle
+    centipede: Centipede
+    ladybug: Ladybug
 labels:
   deliverables: Deliverables
   outcomes: Outcomes

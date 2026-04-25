@@ -20,6 +20,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { primaryNavigation } from "@/data/navigation";
 import { replaceLocaleInPathname, stripLocaleFromPathname } from "@/i18n/routing";
 import type { Locale } from "@/i18n/config";
+import type { AmbientObjectKey } from "@/components/effects/ambientSettings";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import classes from "@/components/layout/SiteHeader.module.css";
@@ -48,8 +49,8 @@ interface SiteHeaderProps {
   };
   theme: {
     toggle: string;
-    light: string;
-    dark: string;
+    count: string;
+    objects: Record<AmbientObjectKey, string>;
   };
 }
 

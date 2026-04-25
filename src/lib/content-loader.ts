@@ -50,8 +50,17 @@ interface SharedContent {
   };
   theme: {
     toggle: string;
-    light: string;
-    dark: string;
+    count: string;
+    objects: {
+      dandelion: string;
+      strawberryPlant: string;
+      grassClump: string;
+      aphid: string;
+      leafBeetle: string;
+      groundBeetle: string;
+      centipede: string;
+      ladybug: string;
+    };
   };
   labels: {
     deliverables: string;

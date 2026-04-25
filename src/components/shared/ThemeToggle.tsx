@@ -2,41 +2,40 @@
 
 import {
   ActionIcon,
-  Button,
+  Group,
   Modal,
+  Slider,
   Stack,
+  Text,
   Tooltip,
-  useComputedColorScheme,
-  useMantineColorScheme,
 } from "@mantine/core";
-import {
-  IconCheck,
-  IconMoonStars,
-  IconSettings2,
-  IconSunHigh,
-} from "@tabler/icons-react";
+import { IconSettings2 } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
+import { useEffect, useState } from "react";
+
+import {
+  ambientObjectControls,
+  getAmbientObjectCounts,
+  setAmbientObjectCount,
+  subscribeAmbientObjectCounts,
+  type AmbientObjectCounts,
+  type AmbientObjectKey,
+} from "@/components/effects/ambientSettings";
 
 interface ThemeToggleProps {
   content: {
     toggle: string;
-    light: string;
-    dark: string;
+    count: string;
+    objects: Record<AmbientObjectKey, string>;
   };
   className?: string;
 }
 
 export function ThemeToggle({ content, className }: ThemeToggleProps) {
-  const { setColorScheme } = useMantineColorScheme();
   const [opened, { close, open }] = useDisclosure(false);
-  const computedColorScheme = useComputedColorScheme("light", {
-    getInitialValueInEffect: true,
-  });
+  const [counts, setCounts] = useState<AmbientObjectCounts>(() => getAmbientObjectCounts());
 
-  function handleSelect(nextColorScheme: "light" | "dark") {
-    setColorScheme(nextColorScheme);
-    close();
-  }
+  useEffect(() => subscribeAmbientObjectCounts(setCounts), []);
 
   return (
     <>
@@ -65,29 +64,28 @@ export function ThemeToggle({ content, className }: ThemeToggleProps) {
         }}
         title={content.toggle}
       >
-        <Stack gap="sm">
-          <Button
-            fullWidth
-            justify="space-between"
-            leftSection={
-              computedColorScheme === "light" ? <IconCheck size={16} /> : <IconSunHigh size={16} />
-            }
-            onClick={() => handleSelect("light")}
-            variant={computedColorScheme === "light" ? "filled" : "light"}
-          >
-            {content.light}
-          </Button>
-          <Button
-            fullWidth
-            justify="space-between"
-            leftSection={
-              computedColorScheme === "dark" ? <IconCheck size={16} /> : <IconMoonStars size={16} />
-            }
-            onClick={() => handleSelect("dark")}
-            variant={computedColorScheme === "dark" ? "filled" : "light"}
-          >
-            {content.dark}
-          </Button>
+        <Stack gap="lg">
+          {ambientObjectControls.map((control) => (
+            <Stack gap={6} key={control.key}>
+              <Group justify="space-between" wrap="nowrap">
+                <Text fw={600} size="sm">
+                  {content.objects[control.key]}
+                </Text>
+                <Text c="dimmed" ff="monospace" size="sm">
+                  {content.count}: {counts[control.key]}
+                </Text>
+              </Group>
+              <Slider
+                aria-label={content.objects[control.key]}
+                label={(value) => value}
+                max={control.max}
+                min={control.min}
+                onChange={(value) => setAmbientObjectCount(control.key, value)}
+                step={control.step}
+                value={counts[control.key]}
+              />
+            </Stack>
+          ))}
         </Stack>
       </Modal>
     </>

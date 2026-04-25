@@ -25,8 +25,16 @@ language:
     da: Dansk
 theme:
   toggle: Indstillinger
-  light: Lyst tema
-  dark: Mørkt tema
+  count: Antal
+  objects:
+    dandelion: Mælkebøtte
+    strawberryPlant: Jordbærplante
+    grassClump: Græs
+    aphid: Bladlus
+    leafBeetle: Bladbille
+    groundBeetle: Jordløber
+    centipede: Tusindben
+    ladybug: Mariehøne
 labels:
   deliverables: Leverancer
   outcomes: Resultater

@@ -12,6 +12,16 @@ const PREDATOR_DISPERSAL_MARGIN: f64 = 140.0;
 const GROUND_BEETLE_STARVE_TIME: f64 = 520.0;
 const CENTIPEDE_STARVE_TIME: f64 = 620.0;
 const LADYBUG_STARVE_TIME: f64 = 460.0;
+const OBJECT_TARGET_COUNT: usize = 8;
+const MAX_OBJECT_TARGET: usize = 80;
+const DEFAULT_DANDELION_COUNT: usize = 8;
+const DEFAULT_STRAWBERRY_PLANT_COUNT: usize = 6;
+const DEFAULT_GRASS_CLUMP_COUNT: usize = 12;
+const DEFAULT_APHID_COUNT: usize = 8;
+const DEFAULT_LEAF_BEETLE_COUNT: usize = 8;
+const DEFAULT_GROUND_BEETLE_COUNT: usize = 3;
+const DEFAULT_CENTIPEDE_COUNT: usize = 1;
+const DEFAULT_LADYBUG_COUNT: usize = 3;
 
 #[wasm_bindgen]
 pub struct BugField {
@@ -24,6 +34,65 @@ pub struct BugField {
     rng: Lcg,
     last_time: Option<f64>,
     dark_mode: bool,
+    object_targets: ObjectCountTargets,
+}
+
+#[derive(Clone, Copy)]
+struct ObjectCountTargets {
+    dandelion: usize,
+    strawberry_plant: usize,
+    grass_clump: usize,
+    aphid: usize,
+    leaf_beetle: usize,
+    ground_beetle: usize,
+    centipede: usize,
+    ladybug: usize,
+}
+
+impl Default for ObjectCountTargets {
+    fn default() -> Self {
+        Self {
+            dandelion: DEFAULT_DANDELION_COUNT,
+            strawberry_plant: DEFAULT_STRAWBERRY_PLANT_COUNT,
+            grass_clump: DEFAULT_GRASS_CLUMP_COUNT,
+            aphid: DEFAULT_APHID_COUNT,
+            leaf_beetle: DEFAULT_LEAF_BEETLE_COUNT,
+            ground_beetle: DEFAULT_GROUND_BEETLE_COUNT,
+            centipede: DEFAULT_CENTIPEDE_COUNT,
+            ladybug: DEFAULT_LADYBUG_COUNT,
+        }
+    }
+}
+
+impl ObjectCountTargets {
+    fn from_values(values: &[f32]) -> Self {
+        let defaults = Self::default();
+
+        Self {
+            dandelion: Self::value_at(values, 0, defaults.dandelion),
+            strawberry_plant: Self::value_at(values, 1, defaults.strawberry_plant),
+            grass_clump: Self::value_at(values, 2, defaults.grass_clump),
+            aphid: Self::value_at(values, 3, defaults.aphid),
+            leaf_beetle: Self::value_at(values, 4, defaults.leaf_beetle),
+            ground_beetle: Self::value_at(values, 5, defaults.ground_beetle),
+            centipede: Self::value_at(values, 6, defaults.centipede),
+            ladybug: Self::value_at(values, 7, defaults.ladybug),
+        }
+    }
+
+    fn value_at(values: &[f32], index: usize, fallback: usize) -> usize {
+        values
+            .get(index)
+            .copied()
+            .filter(|value| value.is_finite())
+            .unwrap_or(fallback as f32)
+            .round()
+            .clamp(0.0, MAX_OBJECT_TARGET as f32) as usize
+    }
+
+    fn total_flora(self) -> usize {
+        self.dandelion + self.strawberry_plant + self.grass_clump
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -106,6 +175,7 @@ enum SceneRole {
 enum FloraKind {
     Dandelion,
     Strawberry,
+    Grass,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -420,19 +490,6 @@ struct RenderContext<'a> {
     time: f64,
 }
 
-#[derive(Default)]
-struct FaunaResourceState {
-    aphid_host_count: usize,
-    aphid_fallback_host_count: usize,
-    leaf_beetle_food_count: usize,
-    leaf_beetle_fallback_food_count: usize,
-    aphid_count: usize,
-    leaf_beetle_count: usize,
-    ground_beetle_count: usize,
-    centipede_count: usize,
-    ladybug_count: usize,
-}
-
 trait SceneObject {
     fn role(&self) -> SceneRole {
         SceneRole::Fauna
@@ -441,6 +498,10 @@ trait SceneObject {
     fn update(&mut self, update: &UpdateContext);
     fn draw(&self, render: &RenderContext) -> Result<(), JsValue>;
     fn position(&self) -> Point;
+
+    fn object_name(&self) -> &'static str {
+        "SceneObject"
+    }
 
     fn should_respawn(&self, bounds: WorldBounds) -> bool {
         let position = self.position();
@@ -523,26 +584,6 @@ trait SceneObject {
 
     fn ground_beetle_threat_position(&self) -> Option<Point> {
         None
-    }
-
-    fn is_aphid(&self) -> bool {
-        false
-    }
-
-    fn is_leaf_beetle(&self) -> bool {
-        false
-    }
-
-    fn is_ground_beetle(&self) -> bool {
-        false
-    }
-
-    fn is_centipede(&self) -> bool {
-        false
-    }
-
-    fn is_ladybug(&self) -> bool {
-        false
     }
 
     fn splat_candidate(
@@ -715,6 +756,21 @@ struct StrawberryPlant {
     runner_phase: f64,
 }
 
+struct GrassClump {
+    root: Point,
+    life: f64,
+    health: f64,
+    leaf_health: f64,
+    sap_health: f64,
+    life_rate: f64,
+    blade_count: usize,
+    spread: f64,
+    max_height: f64,
+    sway_phase: f64,
+    blade_phase: f64,
+    seed: f64,
+}
+
 struct InsectSplat {
     position: Point,
     heading: f64,
@@ -726,6 +782,7 @@ struct InsectSplat {
     palette: SplatPalette,
 }
 
+#[allow(dead_code)]
 struct MaturingFauna {
     kind: FaunaKind,
     position: Point,
@@ -955,6 +1012,7 @@ impl InsectSplat {
     }
 }
 
+#[allow(dead_code)]
 impl MaturingFauna {
     fn spawn(kind: FaunaKind, position: Point, rng: &mut Lcg) -> Self {
         let (min_delay, max_delay, min_size, max_size) = match kind {
@@ -989,28 +1047,12 @@ impl SceneObject for MaturingFauna {
         self.position
     }
 
+    fn object_name(&self) -> &'static str {
+        "MaturingFauna"
+    }
+
     fn emergence_request(&self) -> Option<(FaunaKind, Point)> {
         (self.age >= self.emerge_after).then_some((self.kind, self.position))
-    }
-
-    fn is_aphid(&self) -> bool {
-        self.kind == FaunaKind::Aphid
-    }
-
-    fn is_leaf_beetle(&self) -> bool {
-        self.kind == FaunaKind::LeafBeetle
-    }
-
-    fn is_ground_beetle(&self) -> bool {
-        self.kind == FaunaKind::GroundBeetle
-    }
-
-    fn is_centipede(&self) -> bool {
-        self.kind == FaunaKind::Centipede
-    }
-
-    fn is_ladybug(&self) -> bool {
-        self.kind == FaunaKind::Ladybug
     }
 }
 
@@ -1025,6 +1067,10 @@ impl SceneObject for InsectSplat {
 
     fn position(&self) -> Point {
         self.position
+    }
+
+    fn object_name(&self) -> &'static str {
+        "InsectSplat"
     }
 
     fn should_respawn(&self, bounds: WorldBounds) -> bool {
@@ -1066,6 +1112,7 @@ impl BugField {
             rng: Lcg::new(seed),
             last_time: None,
             dark_mode: false,
+            object_targets: ObjectCountTargets::default(),
         })
     }
 
@@ -1081,7 +1128,7 @@ impl BugField {
         self.viewport.height = viewport_height.max(1.0);
         self.world.bounds.width = page_width.max(self.viewport.width);
         self.world.bounds.height = page_height.max(self.viewport.height);
-        self.dpr = dpr.clamp(1.0, 2.0);
+        self.dpr = dpr.clamp(1.0, 1.5);
         self.clamp_viewport();
 
         self.canvas
@@ -1103,6 +1150,67 @@ impl BugField {
 
     pub fn set_dark_mode(&mut self, dark_mode: bool) {
         self.dark_mode = dark_mode;
+    }
+
+    pub fn set_object_targets(&mut self, targets: Vec<f32>) {
+        self.object_targets =
+            ObjectCountTargets::from_values(&targets[..OBJECT_TARGET_COUNT.min(targets.len())]);
+        self.sync_object_count();
+    }
+
+    pub fn object_counts_json(&self) -> String {
+        let mut dandelion = 0;
+        let mut strawberry_plant = 0;
+        let mut grass_clump = 0;
+        let mut aphid = 0;
+        let mut leaf_beetle = 0;
+        let mut ground_beetle = 0;
+        let mut centipede = 0;
+        let mut ladybug = 0;
+        let mut maturing_fauna = 0;
+        let mut insect_splat = 0;
+        let mut scene_object = 0;
+
+        for object in &self.objects {
+            match object.object_name() {
+                "Dandelion" => dandelion += 1,
+                "StrawberryPlant" => strawberry_plant += 1,
+                "GrassClump" => grass_clump += 1,
+                "Aphid" => aphid += 1,
+                "LeafBeetle" => leaf_beetle += 1,
+                "GroundBeetle" => ground_beetle += 1,
+                "Centipede" => centipede += 1,
+                "Ladybug" => ladybug += 1,
+                "MaturingFauna" => maturing_fauna += 1,
+                "InsectSplat" => insect_splat += 1,
+                _ => scene_object += 1,
+            }
+        }
+
+        format!(
+            "[{{\"name\":\"Dandelion\",\"count\":{}}},\
+{{\"name\":\"StrawberryPlant\",\"count\":{}}},\
+{{\"name\":\"GrassClump\",\"count\":{}}},\
+{{\"name\":\"Aphid\",\"count\":{}}},\
+{{\"name\":\"LeafBeetle\",\"count\":{}}},\
+{{\"name\":\"GroundBeetle\",\"count\":{}}},\
+{{\"name\":\"Centipede\",\"count\":{}}},\
+{{\"name\":\"Ladybug\",\"count\":{}}},\
+{{\"name\":\"MaturingFauna\",\"count\":{}}},\
+{{\"name\":\"InsectSplat\",\"count\":{}}},\
+{{\"name\":\"SceneObject\",\"count\":{}}}]",
+            dandelion,
+            strawberry_plant,
+            grass_clump,
+            aphid,
+            leaf_beetle,
+            ground_beetle,
+            centipede,
+            ladybug,
+            maturing_fauna,
+            insect_splat,
+            scene_object
+        )
     }
 
     pub fn splat_at(&mut self, page_x: f64, page_y: f64) -> bool {
@@ -1143,11 +1251,12 @@ impl BugField {
         if !had_shelters && self.world.has_shelter_regions() {
             self.redistribute_fauna();
         }
-        self.sync_flora_count();
+        self.sync_object_count();
     }
 
     pub fn set_obstacles(&mut self, rects: Vec<f32>) {
         self.world.set_obstacles(rects);
+        self.sync_object_count();
     }
 
     pub fn frame(&mut self, timestamp: f64) -> Result<(), JsValue> {
@@ -1162,61 +1271,61 @@ impl BugField {
             .clear_rect(0.0, 0.0, self.viewport.width, self.viewport.height);
 
         let time_seconds = timestamp * 0.001;
-        let flora_targets: Vec<Point> = self
-            .objects
-            .iter()
-            .filter_map(|object| (object.role() == SceneRole::Flora).then_some(object.position()))
-            .collect();
-        let aphid_host_targets: Vec<PlantTarget> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.aphid_host_position())
-            .collect();
-        let aphid_fallback_hosts: Vec<PlantTarget> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.aphid_fallback_host_position())
-            .collect();
-        let leaf_beetle_food_targets: Vec<PlantTarget> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.leaf_beetle_food_position())
-            .collect();
-        let leaf_beetle_fallback_food: Vec<PlantTarget> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.leaf_beetle_fallback_food_position())
-            .collect();
-        let aphid_targets: Vec<Point> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.aphid_prey_position())
-            .collect();
-        let leaf_beetle_targets: Vec<Point> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.leaf_beetle_prey_position())
-            .collect();
-        let ground_beetle_targets: Vec<Point> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.ground_beetle_prey_position())
-            .collect();
-        let aphid_threats: Vec<Point> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.aphid_threat_position())
-            .collect();
-        let leaf_beetle_threats: Vec<Point> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.leaf_beetle_threat_position())
-            .collect();
-        let ground_beetle_threats: Vec<Point> = self
-            .objects
-            .iter()
-            .filter_map(|object| object.ground_beetle_threat_position())
-            .collect();
+        let object_capacity = self.objects.len();
+        let mut flora_targets: Vec<Point> = Vec::with_capacity(self.object_targets.total_flora());
+        let mut aphid_host_targets: Vec<PlantTarget> =
+            Vec::with_capacity(self.object_targets.total_flora());
+        let mut aphid_fallback_hosts: Vec<PlantTarget> =
+            Vec::with_capacity(self.object_targets.total_flora());
+        let mut leaf_beetle_food_targets: Vec<PlantTarget> =
+            Vec::with_capacity(self.object_targets.total_flora());
+        let mut leaf_beetle_fallback_food: Vec<PlantTarget> =
+            Vec::with_capacity(self.object_targets.total_flora());
+        let mut aphid_targets: Vec<Point> = Vec::with_capacity(self.object_targets.aphid);
+        let mut leaf_beetle_targets: Vec<Point> =
+            Vec::with_capacity(self.object_targets.leaf_beetle);
+        let mut ground_beetle_targets: Vec<Point> =
+            Vec::with_capacity(self.object_targets.ground_beetle);
+        let mut aphid_threats: Vec<Point> = Vec::with_capacity(object_capacity);
+        let mut leaf_beetle_threats: Vec<Point> = Vec::with_capacity(object_capacity);
+        let mut ground_beetle_threats: Vec<Point> = Vec::with_capacity(object_capacity);
+
+        for object in &self.objects {
+            if object.role() == SceneRole::Flora {
+                flora_targets.push(object.position());
+                if let Some(target) = object.aphid_host_position() {
+                    aphid_host_targets.push(target);
+                }
+                if let Some(target) = object.aphid_fallback_host_position() {
+                    aphid_fallback_hosts.push(target);
+                }
+                if let Some(target) = object.leaf_beetle_food_position() {
+                    leaf_beetle_food_targets.push(target);
+                }
+                if let Some(target) = object.leaf_beetle_fallback_food_position() {
+                    leaf_beetle_fallback_food.push(target);
+                }
+            } else {
+                if let Some(target) = object.aphid_prey_position() {
+                    aphid_targets.push(target);
+                }
+                if let Some(target) = object.leaf_beetle_prey_position() {
+                    leaf_beetle_targets.push(target);
+                }
+                if let Some(target) = object.ground_beetle_prey_position() {
+                    ground_beetle_targets.push(target);
+                }
+                if let Some(target) = object.aphid_threat_position() {
+                    aphid_threats.push(target);
+                }
+                if let Some(target) = object.leaf_beetle_threat_position() {
+                    leaf_beetle_threats.push(target);
+                }
+                if let Some(target) = object.ground_beetle_threat_position() {
+                    ground_beetle_threats.push(target);
+                }
+            }
+        }
         let mut respawn_indices = Vec::new();
         let mut rehome_flora_indices = Vec::new();
         let mut germination_requests = Vec::new();
@@ -1454,7 +1563,7 @@ impl BugField {
                     .then_some(object.position())
             })
             .collect();
-        let flora_max = self.maximum_flora_count();
+        let flora_max = self.object_targets.total_flora();
         let mut flora_count = occupied_flora_points.len();
         for request in germination_requests {
             if flora_count >= flora_max {
@@ -1490,22 +1599,22 @@ impl BugField {
             emerged_indices.push(index);
         }
 
+        let mut removed_object_indices = consumed_fauna_indices.clone();
         for index in respawn_indices {
             if consumed_fauna_indices.contains(&index) || emerged_indices.contains(&index) {
                 continue;
             }
-            let replacement = self.spawn_fauna(true);
-            self.objects[index] = replacement;
+            removed_object_indices.push(index);
         }
 
         for index in rehome_flora_indices {
-            if let Some(replacement) = self.spawn_flora() {
-                self.objects[index] = replacement;
-            }
+            removed_object_indices.push(index);
         }
 
-        self.remove_indices(consumed_fauna_indices);
-        self.recover_fauna_pressure(dt);
+        removed_object_indices.sort_unstable();
+        removed_object_indices.dedup();
+        self.remove_indices(removed_object_indices);
+        self.sync_object_count();
 
         let render = RenderContext {
             context: &self.context,
@@ -1537,184 +1646,105 @@ impl BugField {
     }
 
     fn sync_fauna_count(&mut self) {
-        let desired = self.desired_fauna_count();
-        let mut fauna_indices = self.indices_for_role(SceneRole::Fauna);
-
-        match fauna_indices.len().cmp(&desired) {
-            std::cmp::Ordering::Less => {
-                let missing = desired - fauna_indices.len();
-                for _ in 0..missing {
-                    let object = self.spawn_fauna(true);
-                    self.objects.push(object);
-                }
-            }
-            std::cmp::Ordering::Greater => {
-                let remove_count = fauna_indices.len() - desired;
-                let remove_indices: Vec<usize> = fauna_indices
-                    .drain((fauna_indices.len() - remove_count)..)
-                    .collect();
-                self.remove_indices(remove_indices);
-            }
-            std::cmp::Ordering::Equal => {}
-        }
-
-        for index in self.indices_for_role(SceneRole::Fauna) {
-            if self.objects[index].should_rehome(self.world.bounds) {
-                let replacement = self.spawn_fauna(false);
-                self.objects[index] = replacement;
-            }
-        }
-
-        let resources = self.fauna_resource_state();
-        let desired_ground = self.desired_ground_beetle_count(&resources, desired);
-        let ground_count = self
-            .indices_for_role(SceneRole::Fauna)
-            .into_iter()
-            .filter(|index| self.objects[*index].is_ground_beetle())
-            .count();
-        if ground_count < desired_ground {
-            let missing = desired_ground - ground_count;
-            let replace_indices: Vec<usize> = self
-                .indices_for_role(SceneRole::Fauna)
-                .into_iter()
-                .filter(|index| {
-                    !self.objects[*index].is_ground_beetle() && !self.objects[*index].is_centipede()
-                })
-                .take(missing)
-                .collect();
-            for index in replace_indices {
-                self.objects[index] = self.spawn_ground_beetle(false);
-            }
-        }
-
-        let resources = self.fauna_resource_state();
-        let desired_centipede = self.desired_centipede_count(&resources, desired);
-        let centipede_count = self
-            .indices_for_role(SceneRole::Fauna)
-            .into_iter()
-            .filter(|index| self.objects[*index].is_centipede())
-            .count();
-        if centipede_count < desired_centipede {
-            let missing = desired_centipede - centipede_count;
-            let replace_indices: Vec<usize> = self
-                .indices_for_role(SceneRole::Fauna)
-                .into_iter()
-                .filter(|index| {
-                    !self.objects[*index].is_ground_beetle() && !self.objects[*index].is_centipede()
-                })
-                .take(missing)
-                .collect();
-            for index in replace_indices {
-                self.objects[index] = self.spawn_centipede(false);
-            }
-        }
-
-        let resources = self.fauna_resource_state();
-        let desired_ladybug = self.desired_ladybug_count(&resources, desired);
-        let ladybug_count = self
-            .indices_for_role(SceneRole::Fauna)
-            .into_iter()
-            .filter(|index| self.objects[*index].is_ladybug())
-            .count();
-        if ladybug_count < desired_ladybug {
-            let missing = desired_ladybug - ladybug_count;
-            let replace_indices: Vec<usize> = self
-                .indices_for_role(SceneRole::Fauna)
-                .into_iter()
-                .filter(|index| {
-                    !self.objects[*index].is_ground_beetle()
-                        && !self.objects[*index].is_centipede()
-                        && !self.objects[*index].is_ladybug()
-                })
-                .take(missing)
-                .collect();
-            for index in replace_indices {
-                self.objects[index] = self.spawn_ladybug(false);
-            }
-        }
-
-        let resources = self.fauna_resource_state();
-        let desired_aphid = self.desired_aphid_count(&resources, desired);
-        let aphid_count = self
-            .indices_for_role(SceneRole::Fauna)
-            .into_iter()
-            .filter(|index| self.objects[*index].is_aphid())
-            .count();
-        if aphid_count < desired_aphid {
-            let missing = desired_aphid - aphid_count;
-            let replace_indices: Vec<usize> = self
-                .indices_for_role(SceneRole::Fauna)
-                .into_iter()
-                .filter(|index| {
-                    !self.objects[*index].is_aphid()
-                        && !self.objects[*index].is_ground_beetle()
-                        && !self.objects[*index].is_centipede()
-                        && !self.objects[*index].is_ladybug()
-                })
-                .take(missing)
-                .collect();
-            for index in replace_indices {
-                self.objects[index] = self.spawn_aphid(false);
-            }
-        }
+        self.sync_fauna_kind_count(FaunaKind::Aphid, "Aphid", self.object_targets.aphid);
+        self.sync_fauna_kind_count(
+            FaunaKind::LeafBeetle,
+            "LeafBeetle",
+            self.object_targets.leaf_beetle,
+        );
+        self.sync_fauna_kind_count(
+            FaunaKind::GroundBeetle,
+            "GroundBeetle",
+            self.object_targets.ground_beetle,
+        );
+        self.sync_fauna_kind_count(
+            FaunaKind::Centipede,
+            "Centipede",
+            self.object_targets.centipede,
+        );
+        self.sync_fauna_kind_count(FaunaKind::Ladybug, "Ladybug", self.object_targets.ladybug);
     }
 
-    fn recover_fauna_pressure(&mut self, dt: f64) {
-        let desired = self.desired_fauna_count();
-        let current = self.indices_for_role(SceneRole::Fauna).len();
-        if current >= desired {
-            return;
+    fn sync_flora_count(&mut self) {
+        self.sync_flora_kind_count(
+            FloraKind::Dandelion,
+            "Dandelion",
+            self.object_targets.dandelion,
+        );
+        self.sync_flora_kind_count(
+            FloraKind::Strawberry,
+            "StrawberryPlant",
+            self.object_targets.strawberry_plant,
+        );
+        self.sync_flora_kind_count(
+            FloraKind::Grass,
+            "GrassClump",
+            self.object_targets.grass_clump,
+        );
+    }
+
+    fn sync_fauna_kind_count(&mut self, kind: FaunaKind, name: &'static str, desired: usize) {
+        self.trim_object_count(name, desired);
+
+        let rehome_indices: Vec<usize> = self
+            .indices_for_object_name(name)
+            .into_iter()
+            .filter(|index| self.objects[*index].should_rehome(self.world.bounds))
+            .collect();
+        for index in rehome_indices {
+            self.objects[index] = self.spawn_fauna_kind(kind, false);
         }
 
-        let recovery_floor = ((desired as f64) * 0.68).round().max(6.0) as usize;
-        let shortage = desired - current;
-        let spawn_rate_per_second = if current < recovery_floor {
-            0.012 + shortage as f64 * 0.0035
-        } else {
-            shortage as f64 * 0.0022
-        };
-        let chance = (spawn_rate_per_second * dt).min(0.08);
-
-        if self.rng.bool(chance) {
-            if let Some(object) = self.spawn_maturing_resource_fauna(false) {
+        let current = self.indices_for_object_name(name).len();
+        if current < desired {
+            for _ in 0..(desired - current) {
+                let object = self.spawn_fauna_kind(kind, true);
                 self.objects.push(object);
             }
         }
     }
 
-    fn sync_flora_count(&mut self) {
-        let desired = self.minimum_flora_count();
-        let maximum = self.maximum_flora_count();
-        let mut flora_indices = self.indices_for_role(SceneRole::Flora);
+    fn sync_flora_kind_count(&mut self, kind: FloraKind, name: &'static str, desired: usize) {
+        self.trim_object_count(name, desired);
 
-        match flora_indices.len().cmp(&desired) {
-            std::cmp::Ordering::Less => {
-                let missing = desired - flora_indices.len();
-                for _ in 0..missing {
-                    if let Some(object) = self.spawn_flora() {
-                        self.objects.push(object);
-                    }
-                }
+        let rehome_indices: Vec<usize> = self
+            .indices_for_object_name(name)
+            .into_iter()
+            .filter(|index| self.objects[*index].should_rehome_in_cover_world(&self.world))
+            .collect();
+        let mut remove_indices = Vec::new();
+        for index in rehome_indices {
+            if let Some(replacement) = self.spawn_flora_kind(kind) {
+                self.objects[index] = replacement;
+            } else {
+                remove_indices.push(index);
             }
-            std::cmp::Ordering::Greater => {
-                if flora_indices.len() > maximum {
-                    let remove_count = flora_indices.len() - maximum;
-                    let remove_indices: Vec<usize> = flora_indices
-                        .drain((flora_indices.len() - remove_count)..)
-                        .collect();
-                    self.remove_indices(remove_indices);
-                }
-            }
-            std::cmp::Ordering::Equal => {}
         }
+        self.remove_indices(remove_indices);
 
-        for index in self.indices_for_role(SceneRole::Flora) {
-            if self.objects[index].should_rehome_in_cover_world(&self.world) {
-                if let Some(replacement) = self.spawn_flora() {
-                    self.objects[index] = replacement;
+        let current = self.indices_for_object_name(name).len();
+        if current < desired {
+            for _ in 0..(desired - current) {
+                if let Some(object) = self.spawn_flora_kind(kind) {
+                    self.objects.push(object);
                 }
             }
         }
+    }
+
+    fn trim_object_count(&mut self, name: &'static str, desired: usize) {
+        let indices = self.indices_for_object_name(name);
+        if indices.len() > desired {
+            self.remove_indices(indices.into_iter().skip(desired).collect());
+        }
+    }
+
+    fn indices_for_object_name(&self, name: &'static str) -> Vec<usize> {
+        self.objects
+            .iter()
+            .enumerate()
+            .filter_map(|(index, object)| (object.object_name() == name).then_some(index))
+            .collect()
     }
 
     fn clamp_viewport(&mut self) {
@@ -1726,92 +1756,6 @@ impl BugField {
             0.0,
             (self.world.bounds.height - self.viewport.height).max(0.0),
         );
-    }
-
-    fn spawn_fauna(&mut self, edge_only: bool) -> Box<dyn SceneObject> {
-        self.spawn_resource_coupled_fauna(edge_only)
-            .unwrap_or_else(|| self.spawn_founder_fauna(edge_only))
-    }
-
-    fn spawn_resource_coupled_fauna(&mut self, edge_only: bool) -> Option<Box<dyn SceneObject>> {
-        self.select_resource_coupled_fauna_kind()
-            .map(|kind| self.spawn_fauna_kind(kind, edge_only))
-    }
-
-    fn spawn_maturing_resource_fauna(&mut self, edge_only: bool) -> Option<Box<dyn SceneObject>> {
-        let kind = self.select_resource_coupled_fauna_kind()?;
-        let origin = self.fauna_nursery_origin(kind, edge_only);
-        Some(Box::new(MaturingFauna::spawn(kind, origin, &mut self.rng)) as Box<dyn SceneObject>)
-    }
-
-    fn select_resource_coupled_fauna_kind(&mut self) -> Option<FaunaKind> {
-        let desired = self.desired_fauna_count();
-        let resources = self.fauna_resource_state();
-        let desired_aphid = self.desired_aphid_count(&resources, desired);
-        let desired_leaf = self.desired_leaf_beetle_count(&resources, desired);
-        let desired_ground = self.desired_ground_beetle_count(&resources, desired);
-        let desired_centipede = self.desired_centipede_count(&resources, desired);
-        let desired_ladybug = self.desired_ladybug_count(&resources, desired);
-
-        let mut choices = Vec::new();
-        if resources.aphid_count < desired_aphid {
-            choices.push((
-                (desired_aphid - resources.aphid_count) as f64 * 1.25,
-                FaunaKind::Aphid,
-            ));
-        }
-        if resources.leaf_beetle_count < desired_leaf {
-            choices.push((
-                (desired_leaf - resources.leaf_beetle_count) as f64,
-                FaunaKind::LeafBeetle,
-            ));
-        }
-        if resources.ground_beetle_count < desired_ground {
-            choices.push((
-                (desired_ground - resources.ground_beetle_count) as f64 * 0.62,
-                FaunaKind::GroundBeetle,
-            ));
-        }
-        if resources.centipede_count < desired_centipede {
-            choices.push((
-                (desired_centipede - resources.centipede_count) as f64 * 0.38,
-                FaunaKind::Centipede,
-            ));
-        }
-        if resources.ladybug_count < desired_ladybug {
-            choices.push((
-                (desired_ladybug - resources.ladybug_count) as f64 * 0.72,
-                FaunaKind::Ladybug,
-            ));
-        }
-
-        let total: f64 = choices.iter().map(|(weight, _)| *weight).sum();
-        if total <= 0.0 {
-            return None;
-        }
-
-        let mut pick = self.rng.range(0.0, total);
-        for (weight, kind) in choices {
-            if pick <= weight {
-                return Some(kind);
-            }
-            pick -= weight;
-        }
-
-        None
-    }
-
-    fn spawn_founder_fauna(&mut self, edge_only: bool) -> Box<dyn SceneObject> {
-        let resources = self.fauna_resource_state();
-        if resources.aphid_host_count + resources.aphid_fallback_host_count == 0 {
-            return self.spawn_leaf_beetle(edge_only);
-        }
-
-        if self.rng.bool(0.58) {
-            self.spawn_aphid(edge_only)
-        } else {
-            self.spawn_leaf_beetle(edge_only)
-        }
     }
 
     fn spawn_fauna_kind(&mut self, kind: FaunaKind, edge_only: bool) -> Box<dyn SceneObject> {
@@ -1831,101 +1775,6 @@ impl BugField {
         let mut object = self.spawn_fauna_kind(kind, false);
         object.emerge_at(emergence_point, &self.world, self.viewport);
         object
-    }
-
-    fn fauna_nursery_origin(&mut self, kind: FaunaKind, edge_only: bool) -> Point {
-        let clearance = fauna_emergence_clearance(kind);
-        let origin = match kind {
-            FaunaKind::Aphid => {
-                let preferred: Vec<PlantTarget> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| object.aphid_host_position())
-                    .collect();
-                let fallback: Vec<PlantTarget> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| object.aphid_fallback_host_position())
-                    .collect();
-                random_preferred_target(&mut self.rng, &preferred, &fallback, 0.86).map(|host| {
-                    let offset = aphid_host_offset(&mut self.rng);
-                    Point {
-                        x: host.x + offset.x,
-                        y: host.y + offset.y,
-                    }
-                })
-            }
-            FaunaKind::LeafBeetle => {
-                let preferred: Vec<PlantTarget> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| object.leaf_beetle_food_position())
-                    .collect();
-                let fallback: Vec<PlantTarget> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| object.leaf_beetle_fallback_food_position())
-                    .collect();
-                random_preferred_target(&mut self.rng, &preferred, &fallback, 0.84)
-                    .and_then(|point| self.open_point_near(point, clearance))
-            }
-            FaunaKind::GroundBeetle => {
-                let leaf_beetles: Vec<Point> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| object.leaf_beetle_prey_position())
-                    .collect();
-                let aphids: Vec<Point> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| object.aphid_prey_position())
-                    .collect();
-                random_predator_nursery_target(&mut self.rng, &leaf_beetles, &aphids, 0.72)
-                    .and_then(|point| self.open_point_near(point, clearance))
-            }
-            FaunaKind::Centipede => {
-                let ground_beetles: Vec<Point> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| object.ground_beetle_prey_position())
-                    .collect();
-                let leaf_beetles: Vec<Point> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| object.leaf_beetle_prey_position())
-                    .collect();
-                let prey_anchor = random_predator_nursery_target(
-                    &mut self.rng,
-                    &ground_beetles,
-                    &leaf_beetles,
-                    0.78,
-                );
-                prey_anchor.and_then(|point| self.open_point_near(point, clearance))
-            }
-            FaunaKind::Ladybug => {
-                let aphids: Vec<Point> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| object.aphid_prey_position())
-                    .collect();
-                let flora: Vec<Point> = self
-                    .objects
-                    .iter()
-                    .filter_map(|object| {
-                        (object.role() == SceneRole::Flora).then_some(object.position())
-                    })
-                    .collect();
-                random_target(&mut self.rng, &aphids)
-                    .or_else(|| random_target(&mut self.rng, &flora))
-                    .and_then(|point| self.open_point_near(point, clearance))
-            }
-        };
-
-        origin
-            .or_else(|| self.world.sample_open_point(&mut self.rng, clearance))
-            .unwrap_or_else(|| {
-                fallback_ground_beetle_position(&mut self.rng, self.world.bounds, edge_only)
-            })
     }
 
     fn open_point_near(&mut self, center: Point, clearance: f64) -> Option<Point> {
@@ -1949,9 +1798,9 @@ impl BugField {
         None
     }
 
-    fn spawn_flora(&mut self) -> Option<Box<dyn SceneObject>> {
+    fn spawn_flora_kind(&mut self, kind: FloraKind) -> Option<Box<dyn SceneObject>> {
         let root = self.world.sample_open_point(&mut self.rng, 10.0)?;
-        self.spawn_random_flora_at(root)
+        self.spawn_flora_of_kind_at(kind, root)
     }
 
     fn indices_for_role(&self, role: SceneRole) -> Vec<usize> {
@@ -1972,18 +1821,19 @@ impl BugField {
 
     fn redistribute_fauna(&mut self) {
         for index in self.indices_for_role(SceneRole::Fauna) {
-            let replacement = self.spawn_fauna(false);
-            self.objects[index] = replacement;
-        }
-    }
+            let replacement = match self.objects[index].object_name() {
+                "Aphid" => Some(self.spawn_fauna_kind(FaunaKind::Aphid, false)),
+                "LeafBeetle" => Some(self.spawn_fauna_kind(FaunaKind::LeafBeetle, false)),
+                "GroundBeetle" => Some(self.spawn_fauna_kind(FaunaKind::GroundBeetle, false)),
+                "Centipede" => Some(self.spawn_fauna_kind(FaunaKind::Centipede, false)),
+                "Ladybug" => Some(self.spawn_fauna_kind(FaunaKind::Ladybug, false)),
+                _ => None,
+            };
 
-    fn spawn_random_flora_at(&mut self, root: Point) -> Option<Box<dyn SceneObject>> {
-        let kind = if self.rng.bool(0.34) {
-            FloraKind::Strawberry
-        } else {
-            FloraKind::Dandelion
-        };
-        self.spawn_flora_of_kind_at(kind, root)
+            if let Some(replacement) = replacement {
+                self.objects[index] = replacement;
+            }
+        }
     }
 
     fn spawn_flora_of_kind_at(
@@ -2001,6 +1851,9 @@ impl BugField {
             }
             FloraKind::Strawberry => {
                 Box::new(StrawberryPlant::spawn(root, &mut self.rng)) as Box<dyn SceneObject>
+            }
+            FloraKind::Grass => {
+                Box::new(GrassClump::spawn(root, &mut self.rng)) as Box<dyn SceneObject>
             }
         })
     }
@@ -2029,111 +1882,6 @@ impl BugField {
     fn can_spawn_flora_at(&self, root: Point, occupied: &[Point]) -> bool {
         self.world.is_open_ground(root, 10.0)
             && occupied.iter().all(|point| point.distance_to(root) >= 24.0)
-    }
-
-    fn minimum_flora_count(&self) -> usize {
-        ((self.world.bounds.width * self.world.bounds.height) / 185_000.0)
-            .round()
-            .clamp(4.0, 14.0) as usize
-    }
-
-    fn desired_fauna_count(&self) -> usize {
-        ((self.world.bounds.width * self.world.bounds.height) / 130_000.0)
-            .round()
-            .clamp(12.0, 56.0) as usize
-    }
-
-    fn fauna_resource_state(&self) -> FaunaResourceState {
-        let mut state = FaunaResourceState::default();
-        for object in &self.objects {
-            if object.aphid_host_position().is_some() {
-                state.aphid_host_count += 1;
-            }
-            if object.aphid_fallback_host_position().is_some() {
-                state.aphid_fallback_host_count += 1;
-            }
-            if object.leaf_beetle_food_position().is_some() {
-                state.leaf_beetle_food_count += 1;
-            }
-            if object.leaf_beetle_fallback_food_position().is_some() {
-                state.leaf_beetle_fallback_food_count += 1;
-            }
-            if object.is_aphid() {
-                state.aphid_count += 1;
-            }
-            if object.is_leaf_beetle() {
-                state.leaf_beetle_count += 1;
-            }
-            if object.is_ground_beetle() {
-                state.ground_beetle_count += 1;
-            }
-            if object.is_centipede() {
-                state.centipede_count += 1;
-            }
-            if object.is_ladybug() {
-                state.ladybug_count += 1;
-            }
-        }
-        state
-    }
-
-    fn desired_aphid_count(&self, resources: &FaunaResourceState, desired: usize) -> usize {
-        let host_capacity = resources.aphid_host_count * 4 + resources.aphid_fallback_host_count;
-        if host_capacity == 0 {
-            0
-        } else {
-            (((desired as f64) / 3.2).round() as usize).clamp(1, host_capacity.min(20))
-        }
-    }
-
-    fn desired_leaf_beetle_count(&self, resources: &FaunaResourceState, desired: usize) -> usize {
-        let host_capacity =
-            resources.leaf_beetle_food_count * 2 + resources.leaf_beetle_fallback_food_count / 2;
-        if host_capacity == 0 {
-            0
-        } else {
-            (((desired as f64) / 4.6).round() as usize).clamp(1, host_capacity.min(14))
-        }
-    }
-
-    fn desired_ground_beetle_count(&self, resources: &FaunaResourceState, desired: usize) -> usize {
-        let prey_pressure = resources.leaf_beetle_count * 2 + resources.aphid_count;
-        if prey_pressure < 3 {
-            0
-        } else {
-            ((desired as f64) / 12.0)
-                .round()
-                .clamp(1.0, ((prey_pressure + 3) / 4).clamp(1, 5) as f64) as usize
-        }
-    }
-
-    fn desired_centipede_count(&self, resources: &FaunaResourceState, desired: usize) -> usize {
-        let prey_pressure = resources.ground_beetle_count * 3 + resources.leaf_beetle_count;
-        if prey_pressure < 4 {
-            0
-        } else {
-            ((desired as f64) / 28.0)
-                .round()
-                .clamp(1.0, ((prey_pressure + 4) / 6).clamp(1, 2) as f64) as usize
-        }
-    }
-
-    fn desired_ladybug_count(&self, resources: &FaunaResourceState, desired: usize) -> usize {
-        if resources.aphid_count < 2 {
-            0
-        } else {
-            ((desired as f64) / 14.0)
-                .round()
-                .clamp(1.0, ((resources.aphid_count + 3) / 4).clamp(1, 4) as f64)
-                as usize
-        }
-    }
-
-    fn maximum_flora_count(&self) -> usize {
-        let minimum = self.minimum_flora_count();
-        ((self.world.bounds.width * self.world.bounds.height) / 155_000.0)
-            .round()
-            .clamp((minimum + 6) as f64, 42.0) as usize
     }
 
     fn spawn_leaf_beetle(&mut self, edge_only: bool) -> Box<dyn SceneObject> {
@@ -2262,6 +2010,10 @@ impl Aphid {
 }
 
 impl SceneObject for Aphid {
+    fn object_name(&self) -> &'static str {
+        "Aphid"
+    }
+
     fn update(&mut self, update: &UpdateContext) {
         self.state_time += update.dt;
 
@@ -2374,10 +2126,6 @@ impl SceneObject for Aphid {
             .then_some(self.motion.position)
     }
 
-    fn is_aphid(&self) -> bool {
-        true
-    }
-
     fn emerge_at(&mut self, point: Point, _world: &CoverWorld, _viewport: Viewport) {
         self.motion.position = point;
         self.host_flora = None;
@@ -2463,6 +2211,10 @@ impl LeafBeetle {
 }
 
 impl SceneObject for LeafBeetle {
+    fn object_name(&self) -> &'static str {
+        "LeafBeetle"
+    }
+
     fn update(&mut self, update: &UpdateContext) {
         self.state_time += update.dt;
         self.sync_home(update.cover_regions);
@@ -2650,10 +2402,6 @@ impl SceneObject for LeafBeetle {
         (self.state != LeafBeetleState::Hidden).then_some(self.motion.position)
     }
 
-    fn is_leaf_beetle(&self) -> bool {
-        true
-    }
-
     fn emerge_at(&mut self, point: Point, world: &CoverWorld, _viewport: Viewport) {
         if let Some((home, hide_anchor, peek_point)) = world.nearest_shelter_home(point, 10.0, 14.0)
         {
@@ -2766,6 +2514,10 @@ impl GroundBeetle {
 }
 
 impl SceneObject for GroundBeetle {
+    fn object_name(&self) -> &'static str {
+        "GroundBeetle"
+    }
+
     fn update(&mut self, update: &UpdateContext) {
         self.state_time += update.dt;
         self.sync_rest_home(update.cover_regions);
@@ -3000,10 +2752,6 @@ impl SceneObject for GroundBeetle {
         self.state_time = 0.0;
     }
 
-    fn is_ground_beetle(&self) -> bool {
-        true
-    }
-
     fn ground_beetle_prey_position(&self) -> Option<Point> {
         (self.state != GroundBeetleState::Sheltering).then_some(self.motion.position)
     }
@@ -3136,6 +2884,10 @@ impl Centipede {
 }
 
 impl SceneObject for Centipede {
+    fn object_name(&self) -> &'static str {
+        "Centipede"
+    }
+
     fn update(&mut self, update: &UpdateContext) {
         self.state_time += update.dt;
         let previous_position = self.motion.position;
@@ -3356,10 +3108,6 @@ impl SceneObject for Centipede {
         self.reset_trail();
     }
 
-    fn is_centipede(&self) -> bool {
-        true
-    }
-
     fn leaf_beetle_threat_position(&self) -> Option<Point> {
         (self.state != CentipedeState::Sheltering).then_some(self.motion.position)
     }
@@ -3481,6 +3229,10 @@ impl Ladybug {
 }
 
 impl SceneObject for Ladybug {
+    fn object_name(&self) -> &'static str {
+        "Ladybug"
+    }
+
     fn update(&mut self, update: &UpdateContext) {
         self.state_time += update.dt;
 
@@ -3675,10 +3427,6 @@ impl SceneObject for Ladybug {
         self.refresh_flight_delay();
     }
 
-    fn is_ladybug(&self) -> bool {
-        true
-    }
-
     fn aphid_threat_position(&self) -> Option<Point> {
         Some(self.motion.position)
     }
@@ -3773,7 +3521,30 @@ impl StrawberryPlant {
     }
 }
 
+impl GrassClump {
+    fn spawn(root: Point, rng: &mut Lcg) -> Self {
+        Self {
+            root,
+            life: rng.range(0.08, 0.22),
+            health: 1.0,
+            leaf_health: 1.0,
+            sap_health: 1.0,
+            life_rate: rng.range(0.72, 1.18),
+            blade_count: 22 + (rng.next_f64() * 22.0).floor() as usize,
+            spread: rng.range(30.0, 58.0),
+            max_height: rng.range(14.0, 30.0),
+            sway_phase: rng.range(0.0, TAU),
+            blade_phase: rng.range(0.0, TAU),
+            seed: rng.range(0.0, 10_000.0),
+        }
+    }
+}
+
 impl SceneObject for Dandelion {
+    fn object_name(&self) -> &'static str {
+        "Dandelion"
+    }
+
     fn role(&self) -> SceneRole {
         SceneRole::Flora
     }
@@ -3853,6 +3624,10 @@ impl SceneObject for Dandelion {
 }
 
 impl SceneObject for StrawberryPlant {
+    fn object_name(&self) -> &'static str {
+        "StrawberryPlant"
+    }
+
     fn role(&self) -> SceneRole {
         SceneRole::Flora
     }
@@ -3931,6 +3706,72 @@ impl SceneObject for StrawberryPlant {
     }
 }
 
+impl SceneObject for GrassClump {
+    fn object_name(&self) -> &'static str {
+        "GrassClump"
+    }
+
+    fn role(&self) -> SceneRole {
+        SceneRole::Flora
+    }
+
+    fn update(&mut self, update: &UpdateContext) {
+        self.leaf_health = (self.leaf_health + 0.00062 * update.dt).min(1.0);
+        self.sap_health = (self.sap_health + 0.00024 * update.dt).min(1.0);
+        self.health = combined_plant_health(self.leaf_health, self.sap_health);
+        let life_step = 0.00044 + self.life_rate * 0.00058;
+        self.life = (self.life + life_step * update.dt * plant_vigor(self.health)).min(1.08);
+    }
+
+    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
+        draw_grass_clump(self, render)
+    }
+
+    fn position(&self) -> Point {
+        self.root
+    }
+
+    fn aphid_fallback_host_position(&self) -> Option<PlantTarget> {
+        Some(PlantTarget {
+            position: self.root,
+            quality: grass_aphid_host_quality(self),
+        })
+    }
+
+    fn leaf_beetle_fallback_food_position(&self) -> Option<PlantTarget> {
+        Some(PlantTarget {
+            position: self.root,
+            quality: grass_leaf_food_quality(self),
+        })
+    }
+
+    fn should_respawn(&self, _bounds: WorldBounds) -> bool {
+        false
+    }
+
+    fn should_rehome(&self, _bounds: WorldBounds) -> bool {
+        false
+    }
+
+    fn should_rehome_in_cover_world(&self, world: &CoverWorld) -> bool {
+        self.health <= 0.08 || !world.is_open_ground(self.root, 8.0)
+    }
+
+    fn receive_flora_damage(&mut self, kind: FloraDamageKind, damage: f64) {
+        match kind {
+            FloraDamageKind::SapDrain => {
+                self.sap_health = (self.sap_health - damage * 0.78).max(0.0);
+                self.leaf_health = (self.leaf_health - damage * 0.2).max(0.0);
+            }
+            FloraDamageKind::LeafChew => {
+                self.leaf_health = (self.leaf_health - damage * 0.92).max(0.0);
+                self.sap_health = (self.sap_health - damage * 0.06).max(0.0);
+            }
+        }
+        self.health = combined_plant_health(self.leaf_health, self.sap_health);
+    }
+}
+
 fn sample_point_in_rect(rect: Rect, inset: f64, rng: &mut Lcg) -> Point {
     let min_x = rect.x + inset.min(rect.width * 0.35);
     let max_x = rect.x + rect.width - inset.min(rect.width * 0.35);
@@ -3948,15 +3789,6 @@ fn sample_point_in_rect(rect: Rect, inset: f64, rng: &mut Lcg) -> Point {
         x: rng.range(min_x, max_x),
         y: rng.range(min_y, max_y),
     }
-}
-
-fn random_target(rng: &mut Lcg, targets: &[Point]) -> Option<Point> {
-    if targets.is_empty() {
-        return None;
-    }
-
-    let index = ((rng.next_f64() * targets.len() as f64).floor() as usize).min(targets.len() - 1);
-    Some(targets[index])
 }
 
 fn random_plant_target(rng: &mut Lcg, targets: &[PlantTarget]) -> Option<Point> {
@@ -3991,21 +3823,6 @@ fn random_preferred_target(
         random_plant_target(rng, preferred)
     } else {
         random_plant_target(rng, fallback)
-    }
-}
-
-fn random_predator_nursery_target(
-    rng: &mut Lcg,
-    preferred: &[Point],
-    fallback: &[Point],
-    preferred_chance: f64,
-) -> Option<Point> {
-    if preferred.is_empty() {
-        random_target(rng, fallback)
-    } else if fallback.is_empty() || rng.bool(preferred_chance) {
-        random_target(rng, preferred)
-    } else {
-        random_target(rng, fallback)
     }
 }
 
@@ -4791,13 +4608,33 @@ fn move_motion_toward(
         profile,
         ignored_shelter,
     );
-    let wander = (update.time * (0.7 + motion.base_speed * 0.4) + motion.wander_phase).sin() * 0.18
-        + (update.time * 0.32 + motion.stride_phase).cos() * 0.06
-        + extra_wander;
+    let target_focus = target_pull.clamp(0.0, 1.0);
+    let free_roam = 1.0 - target_focus * 0.78;
+    let walk_clock = update.time * (0.32 + motion.base_speed * 0.22);
+    let walk_seed = motion.wander_phase + motion.stride_phase * 0.37 + motion.size * 5.3;
+    let walk_bias = smooth_random_walk(walk_seed, walk_clock);
+    let turn_bias = smooth_random_walk(
+        walk_seed + 31.7,
+        walk_clock * 0.63 + motion.position.x * 0.002,
+    );
+    let drift_bias = smooth_random_walk(
+        walk_seed + 73.1,
+        walk_clock * 0.41 + motion.position.y * 0.002,
+    );
+    let wander_heading =
+        motion.heading + walk_bias * 1.22 + turn_bias * 0.58 + drift_bias * 0.34 + extra_wander;
+    let wander_strength = profile.wander_weight * (1.35 + free_roam * 2.25);
+    let forward_strength = 0.1 + free_roam * 0.08;
 
-    let steer_x = target_vector_x * target_pull + avoid_x + motion.heading.cos() * 0.12;
-    let steer_y = target_vector_y * target_pull + avoid_y + motion.heading.sin() * 0.12;
-    let desired_heading = steer_y.atan2(steer_x) + wander * profile.wander_weight;
+    let steer_x = target_vector_x * target_pull
+        + avoid_x
+        + motion.heading.cos() * forward_strength
+        + wander_heading.cos() * wander_strength;
+    let steer_y = target_vector_y * target_pull
+        + avoid_y
+        + motion.heading.sin() * forward_strength
+        + wander_heading.sin() * wander_strength;
+    let desired_heading = steer_y.atan2(steer_x);
     let delta = shortest_angle(motion.heading, desired_heading);
     motion.heading += delta * (profile.turn_rate + drive * 0.04) * update.dt;
 
@@ -4893,6 +4730,7 @@ fn avoidance_vector_with_ignored_shelter(
     (avoid_x, avoid_y)
 }
 
+#[allow(dead_code)]
 fn draw_maturing_fauna(fauna: &MaturingFauna, render: &RenderContext) -> Result<(), JsValue> {
     let screen_x = fauna.position.x - render.viewport.x;
     let screen_y = fauna.position.y - render.viewport.y;
@@ -5073,28 +4911,21 @@ fn draw_aphid(aphid: &Aphid, render: &RenderContext) -> Result<(), JsValue> {
     context.set_stroke_style(&JsValue::from_str(limb_color));
     context.set_line_width(0.44);
 
+    context.begin_path();
     for index in 0..3 {
         let y = (-0.36 + index as f64 * 0.36) * size;
         let sweep = leg_wave * (0.08 + index as f64 * 0.035) * size;
         let reach = size * (0.72 - index as f64 * 0.08);
 
-        context.begin_path();
         context.move_to(-size * 0.08, y);
         context.line_to(-reach, y - sweep);
-        context.stroke();
-
-        context.begin_path();
         context.move_to(size * 0.12, y);
         context.line_to(reach * 0.58, y + sweep);
-        context.stroke();
     }
 
     let antenna_sway = 0.8 + (render.time * 7.6 + aphid.antenna_phase).sin() * 0.18;
-    context.begin_path();
     context.move_to(size * 0.56, -size * 0.08);
     context.line_to(size * 1.08, -size * 0.34 * antenna_sway);
-    context.stroke();
-    context.begin_path();
     context.move_to(size * 0.56, size * 0.08);
     context.line_to(size * 1.08, size * 0.34 * antenna_sway);
     context.stroke();
@@ -5124,12 +4955,12 @@ fn draw_aphid(aphid: &Aphid, render: &RenderContext) -> Result<(), JsValue> {
 
     context.set_stroke_style(&JsValue::from_str(limb_color));
     context.set_line_width(0.38);
+    context.begin_path();
     for side in [-1.0, 1.0] {
-        context.begin_path();
         context.move_to(-size * 0.62, side * size * 0.2);
         context.line_to(-size * 0.96, side * size * 0.34);
-        context.stroke();
     }
+    context.stroke();
 
     context.set_fill_style(&JsValue::from_str(highlight));
     context.begin_path();
@@ -5231,6 +5062,7 @@ fn draw_leaf_beetle(beetle: &LeafBeetle, render: &RenderContext) -> Result<(), J
     context.set_stroke_style(&JsValue::from_str(limb_color));
     context.set_line_width(profile.limb_width);
 
+    context.begin_path();
     for index in 0..profile.leg_pairs {
         let offset = profile.leg_offset_start + index as f64 * profile.leg_offset_step;
         let sweep =
@@ -5240,21 +5072,17 @@ fn draw_leaf_beetle(beetle: &LeafBeetle, render: &RenderContext) -> Result<(), J
         let y = offset * size;
         let anchor_x = profile.leg_anchor_x * size - 0.02 * size;
 
-        context.begin_path();
         context.move_to(anchor_x, y);
         context.line_to(anchor_x - reach * 0.34, y - sweep * 0.5);
         context.line_to(-reach * 0.82, y - sweep - size * 0.02);
-        context.stroke();
-
-        context.begin_path();
         context.move_to(anchor_x + size * 0.04, y);
         context.line_to(anchor_x + reach * 0.18, y + sweep * 0.36);
         context.line_to(
             reach * profile.front_leg_factor * 0.78,
             y + sweep + size * 0.02,
         );
-        context.stroke();
     }
+    context.stroke();
 
     let antenna_start_x = profile.antenna_start_x * size + size * 0.12;
     let antenna_end_x = profile.antenna_end_x * size + size * 0.1;
@@ -5263,9 +5091,6 @@ fn draw_leaf_beetle(beetle: &LeafBeetle, render: &RenderContext) -> Result<(), J
     context.begin_path();
     context.move_to(antenna_start_x, -profile.antenna_start_y * size * 0.8);
     context.line_to(antenna_end_x, -antenna_end_y * profile.antenna_spread);
-    context.stroke();
-
-    context.begin_path();
     context.move_to(antenna_start_x, profile.antenna_start_y * size * 0.8);
     context.line_to(antenna_end_x, antenna_end_y * profile.antenna_spread);
     context.stroke();
@@ -5332,9 +5157,6 @@ fn draw_leaf_beetle(beetle: &LeafBeetle, render: &RenderContext) -> Result<(), J
         0.0,
         TAU,
     )?;
-    context.fill();
-
-    context.begin_path();
     context.ellipse(
         thorax_center_x - size * 0.04,
         -size * 0.08,
@@ -5358,9 +5180,6 @@ fn draw_leaf_beetle(beetle: &LeafBeetle, render: &RenderContext) -> Result<(), J
         0.0,
         TAU,
     )?;
-    context.stroke();
-
-    context.begin_path();
     context.ellipse(
         thorax_center_x,
         0.0,
@@ -5370,9 +5189,6 @@ fn draw_leaf_beetle(beetle: &LeafBeetle, render: &RenderContext) -> Result<(), J
         0.0,
         TAU,
     )?;
-    context.stroke();
-
-    context.begin_path();
     context.ellipse(head_center_x, 0.0, size * 0.2, size * 0.18, 0.0, 0.0, TAU)?;
     context.stroke();
 
@@ -5510,24 +5326,21 @@ fn draw_ladybug(ladybug: &Ladybug, render: &RenderContext) -> Result<(), JsValue
 
     context.set_stroke_style(&JsValue::from_str(limb_color));
     context.set_line_width(0.78);
+    context.begin_path();
     for index in 0..3 {
         let offset = (-0.52 + index as f64 * 0.5) * size;
         let sweep = leg_wave * (0.15 + index as f64 * 0.05) * size * (1.0 - wing_open * 0.55);
         let reach = size * (0.86 - index as f64 * 0.08).max(0.56) * (1.0 - wing_open * 0.36);
         let anchor_x = -0.02 * size;
 
-        context.begin_path();
         context.move_to(anchor_x, offset);
         context.line_to(anchor_x - reach * 0.38, offset - sweep);
         context.line_to(-reach, offset - sweep - size * 0.08);
-        context.stroke();
-
-        context.begin_path();
         context.move_to(anchor_x + size * 0.12, offset);
         context.line_to(anchor_x + reach * 0.16, offset + sweep * 0.82);
         context.line_to(reach * 0.44, offset + sweep + size * 0.06);
-        context.stroke();
     }
+    context.stroke();
 
     let antenna_start_x = size * 0.76;
     let antenna_end_x = size * 1.3;
@@ -5536,8 +5349,6 @@ fn draw_ladybug(ladybug: &Ladybug, render: &RenderContext) -> Result<(), JsValue
     context.begin_path();
     context.move_to(antenna_start_x, -size * 0.08);
     context.line_to(antenna_end_x, -antenna_end_y);
-    context.stroke();
-    context.begin_path();
     context.move_to(antenna_start_x, size * 0.08);
     context.line_to(antenna_end_x, antenna_end_y);
     context.stroke();
@@ -5549,8 +5360,8 @@ fn draw_ladybug(ladybug: &Ladybug, render: &RenderContext) -> Result<(), JsValue
         context.set_stroke_style(&JsValue::from_str(wing_outline));
         context.set_line_width(0.46);
 
+        context.begin_path();
         for side in [-1.0, 1.0] {
-            context.begin_path();
             context.ellipse(
                 shell_center_x - size * 0.24,
                 side * size * (0.26 + wing_open * 0.58),
@@ -5560,17 +5371,15 @@ fn draw_ladybug(ladybug: &Ladybug, render: &RenderContext) -> Result<(), JsValue
                 0.0,
                 TAU,
             )?;
-            context.fill();
-            context.stroke();
         }
+        context.fill();
+        context.stroke();
         context.restore();
     }
 
     context.set_fill_style(&JsValue::from_str(head_fill));
     context.begin_path();
     context.ellipse(size * 0.54, 0.0, size * 0.48, size * 0.34, -0.04, 0.0, TAU)?;
-    context.fill();
-    context.begin_path();
     context.ellipse(size * 0.98, 0.0, size * 0.24, size * 0.21, -0.08, 0.0, TAU)?;
     context.fill();
 
@@ -5585,8 +5394,6 @@ fn draw_ladybug(ladybug: &Ladybug, render: &RenderContext) -> Result<(), JsValue
         0.0,
         TAU,
     )?;
-    context.fill();
-    context.begin_path();
     context.ellipse(
         size * 0.4,
         size * 0.22,
@@ -5642,8 +5449,8 @@ fn draw_ladybug(ladybug: &Ladybug, render: &RenderContext) -> Result<(), JsValue
             (-0.02, 0.02, 0.25, 0.18),
             (0.48, 0.1, 0.2, 0.15),
         ];
+        context.begin_path();
         for (sx, sy, rx, ry) in spots {
-            context.begin_path();
             context.ellipse(
                 shell_center_x + sx * size,
                 shell_center_y + offset_y + side * sy * size,
@@ -5653,8 +5460,8 @@ fn draw_ladybug(ladybug: &Ladybug, render: &RenderContext) -> Result<(), JsValue
                 0.0,
                 TAU,
             )?;
-            context.fill();
         }
+        context.fill();
 
         context.set_fill_style(&JsValue::from_str(shell_highlight));
         context.begin_path();
@@ -5685,8 +5492,8 @@ fn draw_ladybug(ladybug: &Ladybug, render: &RenderContext) -> Result<(), JsValue
 
     context.set_stroke_style(&JsValue::from_str(shell_outline));
     context.set_line_width(0.74);
+    context.begin_path();
     for side in [-1.0, 1.0] {
-        context.begin_path();
         context.ellipse(
             shell_center_x,
             shell_center_y + side * size * (0.18 + wing_open * 0.16),
@@ -5696,10 +5503,8 @@ fn draw_ladybug(ladybug: &Ladybug, render: &RenderContext) -> Result<(), JsValue
             0.0,
             TAU,
         )?;
-        context.stroke();
     }
 
-    context.begin_path();
     context.move_to(
         shell_center_x - shell_rx * 0.94,
         -size * (0.02 + wing_open * 0.04),
@@ -5794,6 +5599,7 @@ fn draw_ground_beetle(beetle: &GroundBeetle, render: &RenderContext) -> Result<(
     context.set_stroke_style(&JsValue::from_str(limb_color));
     context.set_line_width(profile.limb_width);
 
+    context.begin_path();
     for index in 0..profile.leg_pairs {
         let offset = profile.leg_offset_start + index as f64 * profile.leg_offset_step;
         let sweep =
@@ -5803,18 +5609,14 @@ fn draw_ground_beetle(beetle: &GroundBeetle, render: &RenderContext) -> Result<(
         let y = offset * size;
         let anchor_x = profile.leg_anchor_x * size + size * 0.04;
 
-        context.begin_path();
         context.move_to(anchor_x, y);
         context.line_to(anchor_x - reach * 0.42, y - sweep * 0.55);
         context.line_to(-reach, y - sweep - size * 0.12);
-        context.stroke();
-
-        context.begin_path();
         context.move_to(anchor_x + size * 0.08, y);
         context.line_to(anchor_x + reach * 0.22, y + sweep * 0.45);
         context.line_to(reach * profile.front_leg_factor, y + sweep + size * 0.08);
-        context.stroke();
     }
+    context.stroke();
 
     let antenna_start_x = profile.antenna_start_x * size + size * 0.22;
     let antenna_end_x = profile.antenna_end_x * size + size * 0.12;
@@ -5823,9 +5625,6 @@ fn draw_ground_beetle(beetle: &GroundBeetle, render: &RenderContext) -> Result<(
     context.begin_path();
     context.move_to(antenna_start_x, -profile.antenna_start_y * size);
     context.line_to(antenna_end_x, -antenna_end_y * profile.antenna_spread);
-    context.stroke();
-
-    context.begin_path();
     context.move_to(antenna_start_x, profile.antenna_start_y * size);
     context.line_to(antenna_end_x, antenna_end_y * profile.antenna_spread);
     context.stroke();
@@ -5905,13 +5704,13 @@ fn draw_ground_beetle(beetle: &GroundBeetle, render: &RenderContext) -> Result<(
 
     context.set_stroke_style(&JsValue::from_str(ridge_color));
     context.set_line_width(0.46);
+    context.begin_path();
     for index in -3..=3 {
         let y = index as f64 * size * 0.18;
-        context.begin_path();
         context.move_to(shell_center_x - shell_rx * 0.72, shell_center_y + y);
         context.line_to(shell_center_x + shell_rx * 0.88, shell_center_y + y * 0.74);
-        context.stroke();
     }
+    context.stroke();
     context.restore();
 
     context.set_shadow_blur(0.0);
@@ -5927,9 +5726,6 @@ fn draw_ground_beetle(beetle: &GroundBeetle, render: &RenderContext) -> Result<(
         0.0,
         TAU,
     )?;
-    context.stroke();
-
-    context.begin_path();
     context.move_to(shell_center_x - shell_rx * 0.96, shell_center_y);
     context.line_to(shell_center_x + shell_rx * 0.92, shell_center_y);
     context.stroke();
@@ -5954,9 +5750,6 @@ fn draw_ground_beetle(beetle: &GroundBeetle, render: &RenderContext) -> Result<(
         0.0,
         TAU,
     )?;
-    context.fill();
-
-    context.begin_path();
     context.ellipse(
         shell_center_x - size * 0.1,
         -size * 0.08,
@@ -6068,6 +5861,7 @@ fn draw_centipede(centipede: &Centipede, render: &RenderContext) -> Result<(), J
     context.set_stroke_style(&JsValue::from_str(leg_color));
     context.set_line_width(0.46 + size * 0.055);
 
+    context.begin_path();
     for (index, (point, heading, rx, ry, t)) in
         segments.iter().enumerate().skip(1).take(segment_count - 2)
     {
@@ -6096,21 +5890,20 @@ fn draw_centipede(centipede: &Centipede, render: &RenderContext) -> Result<(), J
                     + side_y * side * (reach * 0.42 + sweep * size * 0.14),
             };
 
-            context.begin_path();
             context.move_to(anchor.x - render.viewport.x, anchor.y - render.viewport.y);
             context.line_to(knee.x - render.viewport.x, knee.y - render.viewport.y);
             context.line_to(tip.x - render.viewport.x, tip.y - render.viewport.y);
-            context.stroke();
         }
     }
+    context.stroke();
 
     context.set_shadow_blur(6.0);
     context.set_shadow_color(glow_color);
+    context.set_stroke_style(&JsValue::from_str(body_fill));
     for window in segments.windows(2).rev() {
         let front = &window[0];
         let back = &window[1];
         let line_width = (front.3.min(back.3) * 1.8).max(1.2);
-        context.set_stroke_style(&JsValue::from_str(body_fill));
         context.set_line_width(line_width);
         context.begin_path();
         context.move_to(front.0.x - render.viewport.x, front.0.y - render.viewport.y);
@@ -6249,9 +6042,6 @@ fn draw_centipede(centipede: &Centipede, render: &RenderContext) -> Result<(), J
             + head_forward_y * size * 0.92
             + head_side_y * size * 0.42 * antenna_wave,
     );
-    context.stroke();
-
-    context.begin_path();
     context.move_to(
         head_center.x - render.viewport.x - head_side_x * head_ry * 0.14,
         head_center.y - render.viewport.y - head_side_y * head_ry * 0.14,
@@ -6262,9 +6052,6 @@ fn draw_centipede(centipede: &Centipede, render: &RenderContext) -> Result<(), J
         head_center.y - render.viewport.y + head_forward_y * size * 0.92
             - head_side_y * size * 0.42 * antenna_wave,
     );
-    context.stroke();
-
-    context.begin_path();
     context.move_to(
         head_center.x - render.viewport.x + head_side_x * head_ry * 0.1,
         head_center.y - render.viewport.y + head_side_y * head_ry * 0.1,
@@ -6277,9 +6064,6 @@ fn draw_centipede(centipede: &Centipede, render: &RenderContext) -> Result<(), J
             + head_forward_y * size * 1.22
             + head_side_y * size * 0.72 * antenna_wave,
     );
-    context.stroke();
-
-    context.begin_path();
     context.move_to(
         head_center.x - render.viewport.x - head_side_x * head_ry * 0.1,
         head_center.y - render.viewport.y - head_side_y * head_ry * 0.1,
@@ -6313,6 +6097,14 @@ fn draw_centipede(centipede: &Centipede, render: &RenderContext) -> Result<(), J
 fn draw_strawberry_plant(plant: &StrawberryPlant, render: &RenderContext) -> Result<(), JsValue> {
     let screen_x = plant.root.x - render.viewport.x;
     let screen_y = plant.root.y - render.viewport.y;
+
+    if !point_visible_in_viewport(
+        plant.root,
+        render.viewport,
+        DRAW_MARGIN + plant.leaf_span + 58.0,
+    ) {
+        return Ok(());
+    }
 
     let leaf_growth = ease_out_cubic(smoothstep(0.0, 0.28, plant.life));
     let bloom_growth = ease_out_cubic(smoothstep(0.26, 0.6, plant.life));
@@ -6413,8 +6205,6 @@ fn draw_strawberry_plant(plant: &StrawberryPlant, render: &RenderContext) -> Res
                     0.0,
                     TAU,
                 )?;
-                context.fill();
-                context.begin_path();
                 context.ellipse(
                     end_x + 1.9,
                     end_y - 0.9,
@@ -6424,8 +6214,6 @@ fn draw_strawberry_plant(plant: &StrawberryPlant, render: &RenderContext) -> Res
                     0.0,
                     TAU,
                 )?;
-                context.fill();
-                context.begin_path();
                 context.ellipse(end_x, end_y - 2.4, 2.2, 1.2, leaflet_rotation, 0.0, TAU)?;
                 context.fill();
             }
@@ -6511,9 +6299,9 @@ fn draw_strawberry_plant(plant: &StrawberryPlant, render: &RenderContext) -> Res
             context.stroke();
 
             context.set_fill_style(&JsValue::from_str(blossom_petal));
+            context.begin_path();
             for petal_index in 0..5 {
                 let petal_angle = petal_index as f64 / 5.0 * TAU + angle * 0.24;
-                context.begin_path();
                 context.ellipse(
                     blossom_x + petal_angle.cos() * 1.8,
                     blossom_y + petal_angle.sin() * 1.6,
@@ -6523,8 +6311,8 @@ fn draw_strawberry_plant(plant: &StrawberryPlant, render: &RenderContext) -> Res
                     0.0,
                     TAU,
                 )?;
-                context.fill();
             }
+            context.fill();
 
             context.set_fill_style(&JsValue::from_str(blossom_center));
             context.begin_path();
@@ -6581,22 +6369,22 @@ fn draw_strawberry_plant(plant: &StrawberryPlant, render: &RenderContext) -> Res
 
             context.set_stroke_style(&JsValue::from_str(calyx_color));
             context.set_line_width(0.68);
+            context.begin_path();
             for leaf_index in 0..5 {
                 let calyx_angle = leaf_index as f64 / 5.0 * TAU + angle * 0.12;
-                context.begin_path();
                 context.move_to(berry_x, berry_y - 2.8);
                 context.line_to(
                     berry_x + calyx_angle.cos() * 2.6,
                     berry_y - 4.4 + calyx_angle.sin() * 1.6,
                 );
-                context.stroke();
             }
+            context.stroke();
 
             context.set_fill_style(&JsValue::from_str(berry_seed));
+            context.begin_path();
             for seed_index in 0..6 {
                 let seed_angle = seed_index as f64 / 6.0 * TAU + orbit * 1.1;
                 let seed_radius = 1.2 + (seed_index % 2) as f64 * 0.7;
-                context.begin_path();
                 context.ellipse(
                     berry_x + seed_angle.cos() * seed_radius,
                     berry_y + seed_angle.sin() * (seed_radius * 1.18),
@@ -6606,10 +6394,112 @@ fn draw_strawberry_plant(plant: &StrawberryPlant, render: &RenderContext) -> Res
                     0.0,
                     TAU,
                 )?;
-                context.fill();
             }
+            context.fill();
         }
         context.restore();
+    }
+
+    context.restore();
+    Ok(())
+}
+
+fn draw_grass_clump(grass: &GrassClump, render: &RenderContext) -> Result<(), JsValue> {
+    let screen_x = grass.root.x - render.viewport.x;
+    let screen_y = grass.root.y - render.viewport.y;
+
+    if !point_visible_in_viewport(
+        grass.root,
+        render.viewport,
+        DRAW_MARGIN + grass.spread + grass.max_height,
+    ) {
+        return Ok(());
+    }
+
+    let growth = ease_out_cubic(smoothstep(0.0, 0.24, grass.life));
+    let health_vigor = plant_vigor(grass.health);
+    let leaf_vigor = plant_vigor(grass.leaf_health);
+    let plant_fade = health_vigor;
+
+    let base_fill = if render.dark_mode {
+        "rgba(66, 126, 46, 0.22)"
+    } else {
+        "rgba(70, 130, 38, 0.18)"
+    };
+    let blade_deep = if render.dark_mode {
+        "rgba(84, 168, 58, 0.54)"
+    } else {
+        "rgba(54, 126, 34, 0.52)"
+    };
+    let blade_mid = if render.dark_mode {
+        "rgba(132, 214, 78, 0.62)"
+    } else {
+        "rgba(90, 164, 42, 0.58)"
+    };
+    let blade_light = if render.dark_mode {
+        "rgba(190, 238, 118, 0.42)"
+    } else {
+        "rgba(128, 194, 58, 0.42)"
+    };
+
+    let context = render.context;
+    context.save();
+    context.translate(screen_x, screen_y)?;
+    context.set_line_cap("round");
+    context.set_line_join("round");
+    context.set_global_alpha(plant_fade.max(0.0));
+
+    context.save();
+    context.set_global_alpha((0.08 + growth * 0.2) * plant_fade.max(0.0));
+    context.set_fill_style(&JsValue::from_str(base_fill));
+    context.begin_path();
+    context.ellipse(
+        0.0,
+        1.8,
+        grass.spread * 0.58,
+        3.8 + growth * 2.4,
+        0.0,
+        0.0,
+        TAU,
+    )?;
+    context.fill();
+    context.restore();
+
+    let count = grass.blade_count.max(1);
+    context.set_global_alpha((0.18 + growth * 0.68) * plant_fade.max(0.0));
+    context.set_line_width(0.66 + growth * 0.22);
+    for blade_group in 0..3 {
+        context.set_stroke_style(&JsValue::from_str(match blade_group {
+            0 => blade_deep,
+            1 => blade_mid,
+            _ => blade_light,
+        }));
+        context.begin_path();
+        for index in (blade_group..count).step_by(3) {
+            let blade_seed = grass.seed + grass.blade_phase + index as f64 * 1.618_033_988_75;
+            let orbit = (index as f64 + 0.5) / count as f64;
+            let scatter = (blade_seed * 12.989_8).sin();
+            let height_noise = (blade_seed * 78.233).cos().abs();
+            let root_x = (orbit - 0.5) * grass.spread + scatter * grass.spread * 0.08;
+            let root_y = (blade_seed * 0.37).cos().abs() * 2.0;
+            let height = grass.max_height
+                * (0.38 + height_noise * 0.72)
+                * growth
+                * (0.64 + leaf_vigor * 0.36);
+            let lean = (root_x / grass.spread.max(1.0)) * 0.9 + (blade_seed * 2.11).sin() * 0.58;
+            let sway = (render.time * (0.75 + height_noise * 0.42) + grass.sway_phase + blade_seed)
+                .sin()
+                * (0.55 + height * 0.032);
+            let tip_x = root_x + lean * height * 0.34 + sway;
+            let tip_y = -height;
+            let mid_x = root_x + (tip_x - root_x) * 0.48 + (blade_seed * 1.73).cos() * 2.2;
+            let mid_y = -height * (0.4 + (blade_seed * 0.47).sin().abs() * 0.2);
+
+            context.move_to(root_x, root_y);
+            context.line_to(mid_x, mid_y);
+            context.line_to(tip_x, tip_y);
+        }
+        context.stroke();
     }
 
     context.restore();
@@ -6619,6 +6509,17 @@ fn draw_strawberry_plant(plant: &StrawberryPlant, render: &RenderContext) -> Res
 fn draw_dandelion(dandelion: &Dandelion, render: &RenderContext) -> Result<(), JsValue> {
     let screen_x = dandelion.root.x - render.viewport.x;
     let screen_y = dandelion.root.y - render.viewport.y;
+
+    if !point_visible_in_viewport(
+        dandelion.root,
+        render.viewport,
+        DRAW_MARGIN
+            + dandelion.max_height
+            + dandelion.bloom_radius * 7.0
+            + dandelion.seed_count as f64 * 4.0,
+    ) {
+        return Ok(());
+    }
 
     let leaf_growth = ease_out_cubic(smoothstep(0.0, 0.34, dandelion.life));
     let stem_growth = ease_out_cubic(smoothstep(0.14, 0.6, dandelion.life));
@@ -6797,12 +6698,12 @@ fn draw_dandelion(dandelion: &Dandelion, render: &RenderContext) -> Result<(), J
         context.set_line_width(0.8 + bloom_growth * 0.3);
 
         let petal_count = 12 + dandelion.seed_count % 4;
+        context.begin_path();
         for index in 0..petal_count {
             let orbit = index as f64 / petal_count as f64;
             let angle = orbit * TAU + render.time * 0.05 + dandelion.sway_phase;
             let petal_length =
                 bloom_radius * (0.8 + (orbit * TAU + render.time * 0.2).sin() * 0.08);
-            context.begin_path();
             context.move_to(
                 bloom_x + angle.cos() * bloom_radius * 0.22,
                 bloom_y + angle.sin() * bloom_radius * 0.18,
@@ -6811,8 +6712,8 @@ fn draw_dandelion(dandelion: &Dandelion, render: &RenderContext) -> Result<(), J
                 bloom_x + angle.cos() * petal_length,
                 bloom_y + angle.sin() * petal_length * 0.9,
             );
-            context.stroke();
         }
+        context.stroke();
 
         context.set_shadow_blur(0.0);
         context.set_fill_style(&JsValue::from_str(center_color));
@@ -6834,6 +6735,7 @@ fn draw_dandelion(dandelion: &Dandelion, render: &RenderContext) -> Result<(), J
         context.save();
         context.set_global_alpha(seed_head_growth * plant_fade.max(0.0));
         context.set_stroke_style(&JsValue::from_str(seed_filament_color));
+        context.set_fill_style(&JsValue::from_str(seed_kernel_color));
         context.set_line_width(0.65 + seed_head_growth * 0.18);
 
         let attached_count = ((1.0 - shed_progress) * dandelion.seed_count as f64)
@@ -6851,8 +6753,6 @@ fn draw_dandelion(dandelion: &Dandelion, render: &RenderContext) -> Result<(), J
                 angle,
                 filament_length,
                 1.35 + seed_head_growth * 0.7,
-                seed_filament_color,
-                seed_kernel_color,
             )?;
         }
 
@@ -6875,8 +6775,6 @@ fn draw_dandelion(dandelion: &Dandelion, render: &RenderContext) -> Result<(), J
                 drift_angle,
                 2.1 + seed_head_growth * 1.2,
                 1.3 + shed_progress * 0.8,
-                seed_filament_color,
-                seed_kernel_color,
             )?;
         }
 
@@ -6907,36 +6805,29 @@ fn draw_dandelion_seed(
     angle: f64,
     filament_length: f64,
     tuft_size: f64,
-    filament_color: &str,
-    kernel_color: &str,
 ) -> Result<(), JsValue> {
     let kernel_x = anchor_x + angle.cos() * filament_length;
     let kernel_y = anchor_y + angle.sin() * filament_length;
     let tuft_x = kernel_x + angle.cos() * (tuft_size * 0.68);
     let tuft_y = kernel_y + angle.sin() * (tuft_size * 0.68);
 
-    context.set_stroke_style(&JsValue::from_str(filament_color));
     context.begin_path();
     context.move_to(anchor_x, anchor_y);
     context.line_to(kernel_x, kernel_y);
-    context.stroke();
-
-    context.set_fill_style(&JsValue::from_str(kernel_color));
-    context.begin_path();
-    context.ellipse(kernel_x, kernel_y, 0.62, 0.46, angle, 0.0, TAU)?;
-    context.fill();
-
     for index in 0..4 {
         let spread = -0.78 + index as f64 * 0.52;
         let spoke_angle = angle + std::f64::consts::PI + spread;
-        context.begin_path();
         context.move_to(tuft_x, tuft_y);
         context.line_to(
             tuft_x + spoke_angle.cos() * tuft_size,
             tuft_y + spoke_angle.sin() * tuft_size,
         );
-        context.stroke();
     }
+    context.stroke();
+
+    context.begin_path();
+    context.ellipse(kernel_x, kernel_y, 0.62, 0.46, angle, 0.0, TAU)?;
+    context.fill();
 
     Ok(())
 }
@@ -7231,6 +7122,16 @@ fn strawberry_leaf_food_quality(plant: &StrawberryPlant) -> f64 {
     0.1 + plant.leaf_health * 0.56 * leaf_stage + plant.health * 0.1
 }
 
+fn grass_aphid_host_quality(grass: &GrassClump) -> f64 {
+    let soft_growth = smoothstep(0.02, 0.34, grass.life);
+    0.06 + grass.sap_health * 0.34 * soft_growth + grass.health * 0.08
+}
+
+fn grass_leaf_food_quality(grass: &GrassClump) -> f64 {
+    let leaf_stage = smoothstep(0.02, 0.42, grass.life);
+    0.08 + grass.leaf_health * 0.44 * leaf_stage + grass.health * 0.1
+}
+
 fn ease_out_cubic(value: f64) -> f64 {
     let clamped = value.clamp(0.0, 1.0);
     1.0 - (1.0 - clamped).powi(3)
@@ -7243,6 +7144,19 @@ fn smoothstep(start: f64, end: f64, value: f64) -> f64 {
 
     let t = ((value - start) / (end - start)).clamp(0.0, 1.0);
     t * t * (3.0 - 2.0 * t)
+}
+
+fn smooth_random_walk(seed: f64, value: f64) -> f64 {
+    let start = value.floor();
+    let blend = smoothstep(start, start + 1.0, value);
+    let from = signed_unit_noise(seed + start * 37.371);
+    let to = signed_unit_noise(seed + (start + 1.0) * 37.371);
+    from + (to - from) * blend
+}
+
+fn signed_unit_noise(value: f64) -> f64 {
+    let noise = (value * 12.989_8).sin() * 43_758.545_3;
+    (noise - noise.floor()) * 2.0 - 1.0
 }
 
 fn shortest_angle(current: f64, target: f64) -> f64 {
