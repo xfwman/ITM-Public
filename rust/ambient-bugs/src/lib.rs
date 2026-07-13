@@ -22,6 +22,7 @@ const DEFAULT_LEAF_BEETLE_COUNT: usize = 8;
 const DEFAULT_GROUND_BEETLE_COUNT: usize = 3;
 const DEFAULT_CENTIPEDE_COUNT: usize = 1;
 const DEFAULT_LADYBUG_COUNT: usize = 3;
+const PLANT_CACHE_DPR_STEPS: f64 = 20.0;
 
 #[wasm_bindgen]
 pub struct BugField {
@@ -488,6 +489,34 @@ struct RenderContext<'a> {
     viewport: Viewport,
     dark_mode: bool,
     time: f64,
+    dpr: f64,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct PlantSpriteKey {
+    dark_mode: bool,
+    life_bucket: u8,
+    health_bucket: u8,
+    leaf_bucket: u8,
+    sap_bucket: u8,
+    dpr_bucket: u8,
+}
+
+#[derive(Clone, Copy)]
+struct PlantSpriteBounds {
+    left: f64,
+    right: f64,
+    top: f64,
+    bottom: f64,
+}
+
+struct PlantSpriteCache {
+    key: PlantSpriteKey,
+    canvas: HtmlCanvasElement,
+    width: f64,
+    height: f64,
+    offset_x: f64,
+    offset_y: f64,
 }
 
 trait SceneObject {
@@ -496,7 +525,7 @@ trait SceneObject {
     }
 
     fn update(&mut self, update: &UpdateContext);
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue>;
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue>;
     fn position(&self) -> Point;
 
     fn object_name(&self) -> &'static str {
@@ -735,6 +764,7 @@ struct Dandelion {
     seed_phase: f64,
     seed_count: usize,
     germinated_seed_count: usize,
+    sprite_cache: Option<PlantSpriteCache>,
 }
 
 struct StrawberryPlant {
@@ -754,6 +784,7 @@ struct StrawberryPlant {
     bloom_phase: f64,
     fruit_phase: f64,
     runner_phase: f64,
+    sprite_cache: Option<PlantSpriteCache>,
 }
 
 struct GrassClump {
@@ -769,6 +800,7 @@ struct GrassClump {
     sway_phase: f64,
     blade_phase: f64,
     seed: f64,
+    sprite_cache: Option<PlantSpriteCache>,
 }
 
 struct InsectSplat {
@@ -1039,7 +1071,7 @@ impl SceneObject for MaturingFauna {
         self.age += update.dt;
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
         draw_maturing_fauna(self, render)
     }
 
@@ -1061,7 +1093,7 @@ impl SceneObject for InsectSplat {
         self.age += update.dt;
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
         draw_insect_splat(self, render)
     }
 
@@ -1621,15 +1653,16 @@ impl BugField {
             viewport: self.viewport,
             dark_mode: self.dark_mode,
             time: time_seconds,
+            dpr: self.dpr,
         };
 
-        for object in &self.objects {
+        for object in &mut self.objects {
             if object.role() == SceneRole::Flora {
                 object.draw(&render)?;
             }
         }
 
-        for object in &self.objects {
+        for object in &mut self.objects {
             if object.role() == SceneRole::Fauna {
                 object.draw(&render)?;
             }
@@ -2104,7 +2137,7 @@ impl SceneObject for Aphid {
         }
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
         draw_aphid(self, render)
     }
 
@@ -2377,7 +2410,7 @@ impl SceneObject for LeafBeetle {
         }
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
         draw_leaf_beetle(self, render)
     }
 
@@ -2705,7 +2738,7 @@ impl SceneObject for GroundBeetle {
         }
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
         draw_ground_beetle(self, render)
     }
 
@@ -3059,7 +3092,7 @@ impl SceneObject for Centipede {
         self.sync_trail(previous_position);
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
         draw_centipede(self, render)
     }
 
@@ -3394,7 +3427,7 @@ impl SceneObject for Ladybug {
         }
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
         draw_ladybug(self, render)
     }
 
@@ -3494,6 +3527,7 @@ impl Dandelion {
             seed_phase: rng.range(0.0, TAU),
             seed_count: 8 + (rng.next_f64() * 6.0).floor() as usize,
             germinated_seed_count: 0,
+            sprite_cache: None,
         }
     }
 }
@@ -3517,6 +3551,7 @@ impl StrawberryPlant {
             bloom_phase: rng.range(0.0, TAU),
             fruit_phase: rng.range(0.0, TAU),
             runner_phase: rng.range(0.0, TAU),
+            sprite_cache: None,
         }
     }
 }
@@ -3536,6 +3571,7 @@ impl GrassClump {
             sway_phase: rng.range(0.0, TAU),
             blade_phase: rng.range(0.0, TAU),
             seed: rng.range(0.0, 10_000.0),
+            sprite_cache: None,
         }
     }
 }
@@ -3557,8 +3593,8 @@ impl SceneObject for Dandelion {
         self.life = (self.life + life_step * update.dt * plant_vigor(self.health)).min(1.16);
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
-        draw_dandelion(self, render)
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
+        draw_dandelion_cached(self, render)
     }
 
     fn position(&self) -> Point {
@@ -3640,8 +3676,8 @@ impl SceneObject for StrawberryPlant {
         self.life = (self.life + life_step * update.dt * plant_vigor(self.health)).min(1.2);
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
-        draw_strawberry_plant(self, render)
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
+        draw_strawberry_plant_cached(self, render)
     }
 
     fn position(&self) -> Point {
@@ -3723,8 +3759,8 @@ impl SceneObject for GrassClump {
         self.life = (self.life + life_step * update.dt * plant_vigor(self.health)).min(1.08);
     }
 
-    fn draw(&self, render: &RenderContext) -> Result<(), JsValue> {
-        draw_grass_clump(self, render)
+    fn draw(&mut self, render: &RenderContext) -> Result<(), JsValue> {
+        draw_grass_clump_cached(self, render)
     }
 
     fn position(&self) -> Point {
@@ -3824,6 +3860,131 @@ fn random_preferred_target(
     } else {
         random_plant_target(rng, fallback)
     }
+}
+
+fn plant_sprite_key(
+    render: &RenderContext,
+    life: f64,
+    health: f64,
+    leaf_health: f64,
+    sap_health: f64,
+) -> PlantSpriteKey {
+    PlantSpriteKey {
+        dark_mode: render.dark_mode,
+        life_bucket: quantized_bucket(life, 1.2, 48),
+        health_bucket: quantized_bucket(health, 1.0, 8),
+        leaf_bucket: quantized_bucket(leaf_health, 1.0, 8),
+        sap_bucket: quantized_bucket(sap_health, 1.0, 8),
+        dpr_bucket: (render.dpr * PLANT_CACHE_DPR_STEPS)
+            .round()
+            .clamp(0.0, 255.0) as u8,
+    }
+}
+
+fn quantized_bucket(value: f64, max: f64, steps: u8) -> u8 {
+    ((value / max.max(0.001)).clamp(0.0, 1.0) * steps as f64)
+        .floor()
+        .min(steps as f64) as u8
+}
+
+fn render_plant_sprite<F>(
+    key: PlantSpriteKey,
+    root: Point,
+    bounds: PlantSpriteBounds,
+    render: &RenderContext,
+    draw_vector: F,
+) -> Result<PlantSpriteCache, JsValue>
+where
+    F: FnOnce(&RenderContext) -> Result<(), JsValue>,
+{
+    let width = (bounds.left + bounds.right).ceil().max(1.0);
+    let height = (bounds.top + bounds.bottom).ceil().max(1.0);
+    let dpr = render.dpr.clamp(1.0, 1.5);
+    let canvas = create_sprite_canvas(width, height, dpr)?;
+    let context = canvas_2d_context(&canvas)?;
+    context.set_transform(dpr, 0.0, 0.0, dpr, 0.0, 0.0)?;
+    context.clear_rect(0.0, 0.0, width, height);
+
+    let sprite_render = RenderContext {
+        context: &context,
+        viewport: Viewport {
+            width,
+            height,
+            x: root.x - bounds.left,
+            y: root.y - bounds.top,
+        },
+        dark_mode: render.dark_mode,
+        time: 0.0,
+        dpr,
+    };
+    draw_vector(&sprite_render)?;
+
+    Ok(PlantSpriteCache {
+        key,
+        canvas,
+        width,
+        height,
+        offset_x: bounds.left,
+        offset_y: bounds.top,
+    })
+}
+
+fn create_sprite_canvas(width: f64, height: f64, dpr: f64) -> Result<HtmlCanvasElement, JsValue> {
+    let document = web_sys::window()
+        .and_then(|window| window.document())
+        .ok_or_else(|| JsValue::from_str("document unavailable for plant sprite cache"))?;
+    let canvas = document
+        .create_element("canvas")?
+        .dyn_into::<HtmlCanvasElement>()?;
+    canvas.set_width((width * dpr).ceil().max(1.0) as u32);
+    canvas.set_height((height * dpr).ceil().max(1.0) as u32);
+    Ok(canvas)
+}
+
+fn canvas_2d_context(canvas: &HtmlCanvasElement) -> Result<CanvasRenderingContext2d, JsValue> {
+    Ok(canvas
+        .get_context("2d")?
+        .ok_or_else(|| JsValue::from_str("plant sprite cache context unavailable"))?
+        .dyn_into::<CanvasRenderingContext2d>()?)
+}
+
+fn draw_plant_sprite_with_motion(
+    cache: &PlantSpriteCache,
+    root: Point,
+    render: &RenderContext,
+    sway_x: f64,
+    sway_y: f64,
+    rotation: f64,
+) -> Result<(), JsValue> {
+    let context = render.context;
+    context.save();
+    context.translate(
+        root.x - render.viewport.x + sway_x,
+        root.y - render.viewport.y + sway_y,
+    )?;
+    context.rotate(rotation)?;
+    let result = context.draw_image_with_html_canvas_element_and_dw_and_dh(
+        &cache.canvas,
+        -cache.offset_x,
+        -cache.offset_y,
+        cache.width,
+        cache.height,
+    );
+    context.restore();
+    result
+}
+
+fn sprite_visible(root: Point, bounds: PlantSpriteBounds, viewport: Viewport) -> bool {
+    point_visible_in_viewport(
+        root,
+        viewport,
+        bounds
+            .left
+            .max(bounds.right)
+            .max(bounds.top)
+            .max(bounds.bottom)
+            + DRAW_MARGIN,
+    )
 }
 
 fn aphid_host_offset(rng: &mut Lcg) -> Point {
@@ -6092,6 +6253,155 @@ fn draw_centipede(centipede: &Centipede, render: &RenderContext) -> Result<(), J
 
     context.restore();
     Ok(())
+}
+
+fn draw_dandelion_cached(dandelion: &mut Dandelion, render: &RenderContext) -> Result<(), JsValue> {
+    if dandelion.life >= 0.72 {
+        return draw_dandelion(dandelion, render);
+    }
+
+    let bounds = dandelion_sprite_bounds(dandelion);
+    if !sprite_visible(dandelion.root, bounds, render.viewport) {
+        return Ok(());
+    }
+
+    let key = plant_sprite_key(
+        render,
+        dandelion.life,
+        dandelion.health,
+        dandelion.leaf_health,
+        dandelion.sap_health,
+    );
+    let should_rebuild = dandelion
+        .sprite_cache
+        .as_ref()
+        .is_none_or(|cache| cache.key != key);
+
+    if should_rebuild {
+        let cache = render_plant_sprite(key, dandelion.root, bounds, render, |sprite_render| {
+            draw_dandelion(dandelion, sprite_render)
+        })?;
+        dandelion.sprite_cache = Some(cache);
+    }
+
+    if let Some(cache) = &dandelion.sprite_cache {
+        let sway = (render.time * 0.78 + dandelion.sway_phase).sin();
+        draw_plant_sprite_with_motion(
+            cache,
+            dandelion.root,
+            render,
+            sway * 1.15,
+            0.0,
+            sway * 0.012,
+        )?;
+    }
+
+    Ok(())
+}
+
+fn draw_strawberry_plant_cached(
+    plant: &mut StrawberryPlant,
+    render: &RenderContext,
+) -> Result<(), JsValue> {
+    let bounds = strawberry_sprite_bounds(plant);
+    if !sprite_visible(plant.root, bounds, render.viewport) {
+        return Ok(());
+    }
+
+    let key = plant_sprite_key(
+        render,
+        plant.life,
+        plant.health,
+        plant.leaf_health,
+        plant.sap_health,
+    );
+    let should_rebuild = plant
+        .sprite_cache
+        .as_ref()
+        .is_none_or(|cache| cache.key != key);
+
+    if should_rebuild {
+        let cache = render_plant_sprite(key, plant.root, bounds, render, |sprite_render| {
+            draw_strawberry_plant(plant, sprite_render)
+        })?;
+        plant.sprite_cache = Some(cache);
+    }
+
+    if let Some(cache) = &plant.sprite_cache {
+        let sway = (render.time * 0.7 + plant.leaf_phase + plant.sway_phase).sin();
+        draw_plant_sprite_with_motion(cache, plant.root, render, sway * 0.7, 0.0, sway * 0.007)?;
+    }
+
+    Ok(())
+}
+
+fn draw_grass_clump_cached(grass: &mut GrassClump, render: &RenderContext) -> Result<(), JsValue> {
+    let bounds = grass_sprite_bounds(grass);
+    if !sprite_visible(grass.root, bounds, render.viewport) {
+        return Ok(());
+    }
+
+    let key = plant_sprite_key(
+        render,
+        grass.life,
+        grass.health,
+        grass.leaf_health,
+        grass.sap_health,
+    );
+    let should_rebuild = grass
+        .sprite_cache
+        .as_ref()
+        .is_none_or(|cache| cache.key != key);
+
+    if should_rebuild {
+        let cache = render_plant_sprite(key, grass.root, bounds, render, |sprite_render| {
+            draw_grass_clump(grass, sprite_render)
+        })?;
+        grass.sprite_cache = Some(cache);
+    }
+
+    if let Some(cache) = &grass.sprite_cache {
+        let sway = (render.time * 0.82 + grass.sway_phase).sin();
+        draw_plant_sprite_with_motion(
+            cache,
+            grass.root,
+            render,
+            sway * (0.8 + grass.max_height * 0.035),
+            0.0,
+            sway * 0.01,
+        )?;
+    }
+
+    Ok(())
+}
+
+fn dandelion_sprite_bounds(dandelion: &Dandelion) -> PlantSpriteBounds {
+    PlantSpriteBounds {
+        left: dandelion.leaf_span + dandelion.bloom_radius * 3.0 + 18.0,
+        right: dandelion.bloom_radius * 8.0 + dandelion.seed_count as f64 * 3.0 + 34.0,
+        top: dandelion.max_height + dandelion.bloom_radius * 5.0 + dandelion.seed_count as f64,
+        bottom: dandelion.leaf_span + 20.0,
+    }
+}
+
+fn strawberry_sprite_bounds(plant: &StrawberryPlant) -> PlantSpriteBounds {
+    let spread = plant.leaf_span + plant.runner_count as f64 * 4.0 + 38.0;
+    PlantSpriteBounds {
+        left: spread,
+        right: spread,
+        top: plant.leaf_span + plant.flower_count as f64 * 4.0 + 44.0,
+        bottom: plant.leaf_span + plant.berry_count as f64 * 4.0 + 36.0,
+    }
+}
+
+fn grass_sprite_bounds(grass: &GrassClump) -> PlantSpriteBounds {
+    let side = grass.spread * 0.64 + 14.0;
+    PlantSpriteBounds {
+        left: side,
+        right: side,
+        top: grass.max_height + 12.0,
+        bottom: 14.0,
+    }
 }
 
 fn draw_strawberry_plant(plant: &StrawberryPlant, render: &RenderContext) -> Result<(), JsValue> {
